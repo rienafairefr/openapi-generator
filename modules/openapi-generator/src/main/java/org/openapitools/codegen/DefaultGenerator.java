@@ -17,9 +17,6 @@
 
 package org.openapitools.codegen;
 
-import com.samskivert.mustache.Mustache;
-import com.samskivert.mustache.Template;
-
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -37,6 +34,7 @@ import io.swagger.v3.oas.models.tags.Tag;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openapitools.codegen.api.TemplatingEngineAdapter;
 import org.openapitools.codegen.ignore.CodegenIgnoreProcessor;
 //import org.openapitools.codegen.languages.AbstractJavaCodegen;
 import org.openapitools.codegen.utils.ImplementationVersion;
@@ -56,6 +54,7 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
     protected ClientOptInput opts;
     protected OpenAPI openAPI;
     protected CodegenIgnoreProcessor ignoreProcessor;
+    protected TemplatingEngineAdapter templatingEngine;
     private Boolean generateApis = null;
     private Boolean generateModels = null;
     private Boolean generateSupportingFiles = null;
@@ -75,6 +74,7 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
         this.openAPI = opts.getOpenAPI();
         this.config = opts.getConfig();
         this.config.additionalProperties().putAll(opts.getOpts().getProperties());
+        this.templatingEngine = this.config.getTemplatingEngine();
 
         String ignoreFileLocation = this.config.getIgnoreFilePathOverride();
         if (ignoreFileLocation != null) {
@@ -627,21 +627,10 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
                 }
 
                 if (ignoreProcessor.allowsFile(new File(outputFilename))) {
-                    if (templateFile.endsWith("mustache")) {
-                        String template = readTemplate(templateFile);
-                        Mustache.Compiler compiler = Mustache.compiler();
-                        compiler = config.processCompiler(compiler);
-                        Template tmpl = compiler
-                                .withLoader(new Mustache.TemplateLoader() {
-                                    @Override
-                                    public Reader getTemplate(String name) {
-                                        return getTemplateReader(getFullTemplateFile(config, name + ".mustache"));
-                                    }
-                                })
-                                .defaultValue("")
-                                .compile(template);
-
-                        writeToFile(outputFilename, tmpl.execute(bundle));
+                    if (templateFile.endsWith(templatingEngine.getFileExtension())) {
+                        String templateContent = templatingEngine
+                            .doProcessTemplateToFile(this, bundle, support.templateFile);
+                        writeToFile(outputFilename, templateContent);
                         files.add(new File(outputFilename));
                     } else {
                         InputStream in = null;
@@ -807,25 +796,16 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
         return files;
     }
 
+    @Override
+    public String getFullTemplate(String templateName) {
+        return readTemplate(getFullTemplateFile(config, templateName));
+    }
 
     protected File processTemplateToFile(Map<String, Object> templateData, String templateName, String outputFilename) throws IOException {
         String adjustedOutputFilename = outputFilename.replaceAll("//", "/").replace('/', File.separatorChar);
         if (ignoreProcessor.allowsFile(new File(adjustedOutputFilename))) {
-            String templateFile = getFullTemplateFile(config, templateName);
-            String template = readTemplate(templateFile);
-            Mustache.Compiler compiler = Mustache.compiler();
-            compiler = config.processCompiler(compiler);
-            Template tmpl = compiler
-                    .withLoader(new Mustache.TemplateLoader() {
-                        @Override
-                        public Reader getTemplate(String name) {
-                            return getTemplateReader(getFullTemplateFile(config, name + ".mustache"));
-                        }
-                    })
-                    .defaultValue("")
-                    .compile(template);
-
-            writeToFile(adjustedOutputFilename, tmpl.execute(templateData));
+            String templateContent = templatingEngine.doProcessTemplateToFile(this, templateData, templateName);
+            writeToFile(adjustedOutputFilename, templateContent);
             return new File(adjustedOutputFilename);
         }
 

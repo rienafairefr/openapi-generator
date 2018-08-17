@@ -31,10 +31,11 @@ import java.util.Scanner;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.openapitools.codegen.api.TemplatingGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class AbstractGenerator {
+public abstract class AbstractGenerator implements TemplatingGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGenerator.class);
 
     @SuppressWarnings("static-method")
