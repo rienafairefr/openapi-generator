@@ -49,6 +49,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.CodegenDiscriminator.MappedModel;
+import org.openapitools.codegen.api.TemplatingEngineAdapter;
 import org.openapitools.codegen.examples.ExampleGenerator;
 import org.openapitools.codegen.serializer.SerializerUtils;
 import org.openapitools.codegen.utils.ModelUtils;
@@ -125,6 +126,7 @@ public class DefaultCodegen implements CodegenConfig {
     protected String docExtension;
 
     protected String ignoreFilePathOverride;
+    private TemplatingEngineAdapter templatingEngine;
 
     public List<CliOption> cliOptions() {
         return cliOptions;
@@ -3680,6 +3682,16 @@ public class DefaultCodegen implements CodegenConfig {
     @SuppressWarnings("static-method")
     public String sanitizeName(String name) {
         return sanitizeName(name, "\\W");
+    }
+
+    @Override
+    public void setTemplatingEngine(TemplatingEngineAdapter templatingEngine) {
+        this.templatingEngine = templatingEngine;
+    }
+
+    @Override
+    public TemplatingEngineAdapter getTemplatingEngine() {
+        return this.templatingEngine;
     }
 
     /**

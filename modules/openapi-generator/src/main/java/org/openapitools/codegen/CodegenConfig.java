@@ -27,6 +27,7 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.openapitools.codegen.api.TemplatingEngineAdapter;
 
 public interface CodegenConfig {
     CodegenType getTag();
@@ -248,4 +249,7 @@ public interface CodegenConfig {
 
     String sanitizeName(String name);
 
+    void setTemplatingEngine(TemplatingEngineAdapter s);
+
+    TemplatingEngineAdapter getTemplatingEngine();
 }
