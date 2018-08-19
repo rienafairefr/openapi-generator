@@ -13,6 +13,7 @@ import org.openapitools.codegen.MockDefaultGenerator;
 import org.openapitools.codegen.MockDefaultGenerator.WrittenTemplateBasedFile;
 import org.openapitools.codegen.TestUtils;
 import org.openapitools.codegen.languages.JavaJerseyServerCodegen;
+import org.openapitools.codegen.templating.MustacheEngineAdapter;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -96,6 +97,7 @@ public class JavaJerseyServerCodegenTest {
         JavaJerseyServerCodegen codegen = new JavaJerseyServerCodegen();
         codegen.setUseTags(false);
         codegen.setOutputDir(output.getAbsolutePath());
+        codegen.setTemplatingEngine(new MustacheEngineAdapter());
 
         ClientOpts opts = new ClientOpts();
         ClientOptInput input = new ClientOptInput();
