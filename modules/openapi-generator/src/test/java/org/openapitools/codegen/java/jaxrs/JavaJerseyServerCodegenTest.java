@@ -97,7 +97,6 @@ public class JavaJerseyServerCodegenTest {
         JavaJerseyServerCodegen codegen = new JavaJerseyServerCodegen();
         codegen.setUseTags(false);
         codegen.setOutputDir(output.getAbsolutePath());
-        codegen.setTemplatingEngine(new MustacheEngineAdapter());
 
         ClientOpts opts = new ClientOpts();
         ClientOptInput input = new ClientOptInput();

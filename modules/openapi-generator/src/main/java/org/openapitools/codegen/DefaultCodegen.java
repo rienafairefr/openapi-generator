@@ -52,6 +52,7 @@ import org.openapitools.codegen.CodegenDiscriminator.MappedModel;
 import org.openapitools.codegen.api.TemplatingEngineAdapter;
 import org.openapitools.codegen.examples.ExampleGenerator;
 import org.openapitools.codegen.serializer.SerializerUtils;
+import org.openapitools.codegen.templating.MustacheEngineAdapter;
 import org.openapitools.codegen.utils.ModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,7 +127,7 @@ public class DefaultCodegen implements CodegenConfig {
     protected String docExtension;
 
     protected String ignoreFilePathOverride;
-    private TemplatingEngineAdapter templatingEngine;
+    private TemplatingEngineAdapter templatingEngine = new MustacheEngineAdapter();
 
     public List<CliOption> cliOptions() {
         return cliOptions;
