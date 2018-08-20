@@ -144,6 +144,8 @@ public interface CodegenConfig {
 
     Compiler processCompiler(Compiler compiler);
 
+    TemplatingEngineAdapter processTemplatingEngine(TemplatingEngineAdapter templatingEngine);
+
     String sanitizeTag(String tag);
 
     String toApiFilename(String name);
