@@ -1,0 +1,16 @@
+import functools, click
+
+from {{packageName}}.api_client import ApiClient
+client = ApiClient()
+
+def model_{{classname}}(f):
+{{#vars}}
+    @click.argument("{{{name}}}"{{#defaultValue}},
+    default={{{defaultValue}}}{{/defaultValue}}{{#dataType}},
+    type=lambda v: client.deserialize(v, "{{{dataType}}}"){{/dataType}})
+{{/vars}}
+@functools.wraps(f)
+def inner(*args, **kwargs):
+f(*args, **kwargs)
+return inner
+

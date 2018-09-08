@@ -1,0 +1,49 @@
+# coding: utf-8
+{{>partial_header}}
+from __future__ import absolute_import
+
+from {{packageName}} import *
+from {{packageName}}.models import *
+
+import click
+
+{{# groups }}
+{{# isGroup }}
+    {{# parent.operationIdLowerCase }}
+        @{{{parent.operationIdLowerCase}}}.group()
+    {{/ parent.operationIdLowerCase }}
+    {{^ parent.operationIdLowerCase }}
+        @click.group()
+    {{/ parent.operationIdLowerCase }}
+{{/ isGroup }}
+{{^ isGroup }}
+    {{# parent.operationIdLowerCase }}
+        @{{{parent.operationIdLowerCase}}}.command()
+    {{/ parent.operationIdLowerCase }}
+    {{^ parent.operationIdLowerCase }}
+        @main.command()
+    {{/ parent.operationIdLowerCase }}
+{{/ isGroup }}
+{{# queryParams }}
+    {{# isPrimitiveType }}
+        @click.argument("--{{paramName}}", type={{dataType}})
+    {{/ isPrimitiveType }}
+    {{^ isPrimitiveType }}
+        {{# isListContainer }}
+            @click.argument("--{{paramName}}", type={{baseType}}, multiple=True)
+        {{/ isListContainer }}
+        {{^ isListContainer }}
+            {{# isMapContainer }}
+            {{/ isMapContainer }}
+            {{^ isMapContainer }}
+            {{/ isMapContainer }}
+            @model_{{dataType}}
+            {{ /isListContainer }}
+            {{ /isPrimitiveType }}
+            {{ /queryParams }}
+            def {{operationIdLowerCase}}({{#sortParamsByRequiredFlag}}{{#allParams}}{{#required}}{{paramName}}, {{/required}}{{/allParams}}{{/sortParamsByRequiredFlag}}):  # noqa: E501
+            # {{httpMethod}} {{path}}
+            pass
+
+
+        {{/ groups }}

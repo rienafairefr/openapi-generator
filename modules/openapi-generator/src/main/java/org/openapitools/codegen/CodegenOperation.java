@@ -65,8 +65,10 @@ public class CodegenOperation {
     public String operationIdLowerCase; // for markdown documentation
     public String operationIdCamelCase; // for class names
     public String operationIdSnakeCase;
+    public CodegenOperation parent;
+    public boolean isGroup = false;
 
-    /**
+  /**
      * Check if there's at least one parameter
      *
      * @return true if parameter exists, false otherwise

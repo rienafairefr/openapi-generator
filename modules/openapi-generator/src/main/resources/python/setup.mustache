@@ -23,6 +23,9 @@ REQUIRES.append("aiohttp")
 {{#tornado}}
 REQUIRES.append("tornado>=4.2,<5")
 {{/tornado}}
+{{#click}}
+REQUIRES.append("click>=6.7,<7")
+{{/click}}
 
 setup(
     name=NAME,
