@@ -10,11 +10,9 @@ import click
 def main():
     pass
 
-{{# apiInfo }}
-{{# apis }}
-main.add_command({{ api }}_main)
-{{/apis}}
-{{/apiInfo}}
+{{# cliRoot }}
+{{> partial_cli }}
+{{/ cliRoot }}
 
 if __name__ == '__main__':
     main()

@@ -4,4 +4,5 @@ from __future__ import absolute_import
 
 # import apis into api package
 {{#apiInfo}}{{#apis}}from {{apiPackage}}.{{classVarName}} import {{classname}}
-{{/apis}}{{/apiInfo}}
+{{#click}}from {{apiPackage}}.{{classVarName}}_cli import *
+{{/click}}{{/apis}}{{/apiInfo}}
