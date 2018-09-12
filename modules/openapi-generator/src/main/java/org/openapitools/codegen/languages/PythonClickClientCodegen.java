@@ -144,6 +144,11 @@ class TreeWalker {
                 walk(child, current);
             }
         }
+        if (commandNode.operation != null) {
+            if (!commandNode.operation.returnTypeIsPrimitive) {
+                commandNode.isGroup = true;
+            }
+        }
         return current;
     }
 }
@@ -161,15 +166,23 @@ public class PythonClickClientCodegen extends PythonClientCodegen {
         super.processOpts();
         supportingFiles.add(new SupportingFile("cli.mustache", packageName, "cli.py"));
         modelTemplateFiles.put("model_cli.mustache", "_cli.py");
-        apiTemplateFiles.put("api_cli.mustache", "_cli.py");
     }
 
-    @Override
-    public Map<String, Object> postProcessOperationsWithModels(Map<String, Object> objs,
-                                                               List<Object> allModels) {
+    private static final Pattern FORWARD_SLASH = Pattern.compile("\\/");
 
-        objs = super.postProcessOperationsWithModels(objs, allModels);
-        List<CodegenOperation> operations = (List<CodegenOperation>) ((Map<String, Object>) objs.get("operations")).get("operation");
+    @Override
+    public Map<String, Object> postProcessSupportingFileData(Map<String, Object> objs) {
+        objs = super.postProcessSupportingFileData(objs);
+
+        Map<String, Object> apiInfo = (Map<String, Object>) objs.get("apiInfo");
+        List<Map<String, Object>> apis = (List<Map<String, Object>>) apiInfo.get("apis");
+
+        List<CodegenOperation> operations = new ArrayList<>();
+
+        for (Map<String, Object> api: apis) {
+            List<CodegenOperation> apiOperations = (List<CodegenOperation>) ((Map<String, Object>) api.get("operations")).get("operation");
+            operations.addAll(apiOperations);
+        }
 
         TreeWalker walker = new TreeWalker();
 
@@ -199,17 +212,27 @@ public class PythonClickClientCodegen extends PythonClientCodegen {
         walker.root.print();
 
         List<CommandNode> cliCommands = walker.walk();
+
+        for (CommandNode node: cliCommands) {
+            if (node.name != null && node.name.contains("/")){
+                node.children
+                String pathParams = node.name.replace(node.cliName + "/", "");
+
+            }
+        }
+
         objs.put("cliCommands", cliCommands);
         objs.put("cliPathParams", cliPathParams);
 
         return objs;
     }
 
+    TreeWalker walker = new TreeWalker();
+
     @Override
-    public Map<String, Object> postProcessSupportingFileData(Map<String, Object> objs) {
-
-
-        return objs;
+    public void addOperationToGroup(String tag, String resourcePath, Operation operation, CodegenOperation co, Map<String, List<CodegenOperation>> operations) {
+        super.addOperationToGroup(tag, resourcePath, operation, co, operations);
+        walker.addOperation(co.path + "/" + co.httpMethod, co);
     }
 
     @Override

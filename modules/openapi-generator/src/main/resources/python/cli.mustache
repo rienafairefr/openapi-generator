@@ -7,23 +7,10 @@ try:
 except ImportError:
     from enum34 import Enum, EnumMeta
 import click
-import re
 import decorator
-import json
-import yaml
-from collections import namedtuple
 from functools import wraps
 
 from {{packageName}} import *
-
-
-class OutputFormat(Enum):
-    json = 0  # json.dumps
-    yaml = 1  # yaml.dump
-    py = 2  # print
-
-
-OutputFormatter = namedtuple('OutputFormatter', ['output'])
 
 
 class State(object):
@@ -38,10 +25,6 @@ class State(object):
 pass_state = click.make_pass_decorator(State)
 
 
-def oprint(obj):
-    # print an object using the current configured output (json/yaml/py)
-    click.get_current_context().find_object(State).format.output(obj)
-
 
 def get_or_push(fun):
     @pass_state
@@ -55,7 +38,7 @@ def get_or_push(fun):
         except:
             current_obj = fun(state, *args, **kwargs)
         if click_context.invoked_subcommand is None:
-            oprint(current_obj)
+            print(current_obj)
         else:
             click_context.obj = current_obj
 
@@ -65,7 +48,7 @@ def get_or_push(fun):
 def object_print(fun):
     def object_print_decorator(fun, *args, **kwargs):
         obj = fun(*args, **kwargs)
-        oprint(obj)
+        print(obj)
 
     return decorator.decorate(fun, object_print_decorator)
 
@@ -88,43 +71,52 @@ def add_typed_subcommands(type_):
     return decorator
 
 
-class EnumType(click.Choice):
-    def __init__(self, enum, casesensitive=True):
-        if isinstance(enum, EnumMeta):
-            choices = enum.__members__
-        else:
-            raise TypeError("`enum` must be `Enum`")
 
-        if not casesensitive:
-            choices = (_.lower() for _ in choices)
+@click.group()
+@click.pass_context
+def main(ctx):
+    configuration = Configuration()
+    ctx.obj = State(format=format, api={{classname}}(configuration))
 
-        self.__enum = enum
-        self.__casesensitive = casesensitive
 
-        # TODO choices do not have the save order as enum
-        super(EnumType, self).__init__(list(sorted(set(choices))))
+{{# cliCommands }}
+# {{ this }}
+    {{# name }}
+    {{# operation }}
+        {{#returnType}}
+            {{^returnTypeIsPrimitive}}
+                {{^ isListContainer }}
+@add_typed_subcommands({{returnType}})
+                {{/ isListContainer }}
+            {{/returnTypeIsPrimitive}}
+        {{/returnType}}
+    {{/operation}}
+    {{# isGroup }}
+@{{{parent.fullName}}}.group(name="{{ cliName }}")
+@get_or_push
+    {{/ isGroup }}
+    {{^ isGroup }}
+@{{{parent.fullName}}}.command(name="{{ cliName }}")
+@object_print
+    {{/ isGroup }}
+    {{# operation }}
+        {{# queryParams }}
+            {{# isPrimitiveType }}
+@click.option("--{{paramName}}", type={{dataType}})
+            {{/ isPrimitiveType }}
+            {{^ isPrimitiveType }}
+# complex type argument {{ dataType }}
+            {{/ isPrimitiveType }}
+        {{/ queryParams }}
+@pass_state
+    {{/operation}}
+def {{fullName}}(state, {{#queryParams}}{{paramName}}{{#hasMore}}, {{/hasMore }}{{/queryParams}}):  # noqa: E501
+    # {{httpMethod}} {{path}}
+    return state.api.{{operationIdLowerCase}}({{#queryParams}}{{paramName}}{{#hasMore}}, {{/hasMore }}{{/queryParams}})
 
-    def convert(self, value, param, state):
-        if not self.__casesensitive:
-            value = value.lower()
 
-        value = super(EnumType, self).convert(value, param, state)
 
-        if not self.__casesensitive:
-            return next(_ for _ in self._EnumType__enum if _.name.lower() ==
-                        value.lower())
-        else:
-            return next(_ for _ in self._EnumType__enum if _.name == value)
-
-    def get_metavar(self, param):
-        word = self.__enum.__name__
-
-        # Stolen from jpvanhal/inflection
-        word = re.sub(r"([A-Z]+)([A-Z][a-z])", r'\1_\2', word)
-        word = re.sub(r"([a-z\d])([A-Z])", r'\1_\2', word)
-        word = word.replace("-", "_").lower().split("_")
-
-        if word[-1] == "enum":
-            word.pop()
-
-        return ("_".join(word)).upper()
+    {{/name}}
+{{/ cliCommands }}
+if __name__ == '__main__':
+    main()

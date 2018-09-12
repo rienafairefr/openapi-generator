@@ -24,12 +24,7 @@ REQUIRES.append("aiohttp")
 REQUIRES.append("tornado>=4.2,<5")
 {{/tornado}}
 {{#click}}
-REQUIRES.extend([
-    "click>=6.7,<7",
-    'enum34;python_version<"3.4"',
-    'PyYAML',
-    "decorator"
-])
+REQUIRES.extend(["click>=6.7,<7", "decorator"])
 {{/click}}
 
 setup(
@@ -45,11 +40,7 @@ setup(
 {{#click}}
     entry_points={
         'console_scripts': [
-    {{#apiInfo}}
-        {{#apis}}
-            '{{projectName}}-{{baseName}}={{apiPackage}}.{{classVarName}}_cli:main'
-        {{/apis}}
-    {{/apiInfo}}
+            '{{projectName}}={{packageName}}.cli:main'
         ]
     },
 {{/click}}
