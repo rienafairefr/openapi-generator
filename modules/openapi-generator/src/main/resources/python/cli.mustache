@@ -2,17 +2,129 @@
 {{>partial_header}}
 from __future__ import absolute_import
 
+try:
+    from enum import Enum, EnumMeta
+except ImportError:
+    from enum34 import Enum, EnumMeta
+import click
+import re
+import decorator
+import json
+import yaml
+from collections import namedtuple
+from functools import wraps
+
 from {{packageName}} import *
 
-import click
 
-@click.command()
-def main():
-    pass
+class OutputFormat(Enum):
+    json = 0  # json.dumps
+    yaml = 1  # yaml.dump
+    py = 2  # print
 
-{{# cliRoot }}
-{{> partial_cli }}
-{{/ cliRoot }}
 
-if __name__ == '__main__':
-    main()
+OutputFormatter = namedtuple('OutputFormatter', ['output'])
+
+
+class State(object):
+    def __init__(self, api=None, format=None, {{# cliPathParams}}{{paramName}}=None{{#hasMore}}, {{/hasMore }}{{/cliPathParams}}):
+        self.api = api
+        self.format = format
+{{# cliPathParams}}
+        self.{{paramName}} = {{paramName}}
+{{/cliPathParams}}
+
+
+pass_state = click.make_pass_decorator(State)
+
+
+def oprint(obj):
+    # print an object using the current configured output (json/yaml/py)
+    click.get_current_context().find_object(State).format.output(obj)
+
+
+def get_or_push(fun):
+    @pass_state
+    @click.pass_context
+    @wraps(fun)
+    def decorated(click_context, state, *args, **kwargs):
+        for attr in kwargs:
+            setattr(state, attr, kwargs[attr])
+        try:
+            current_obj = fun(*args, **kwargs)
+        except:
+            current_obj = fun(state, *args, **kwargs)
+        if click_context.invoked_subcommand is None:
+            oprint(current_obj)
+        else:
+            click_context.obj = current_obj
+
+    return decorated
+
+
+def object_print(fun):
+    def object_print_decorator(fun, *args, **kwargs):
+        obj = fun(*args, **kwargs)
+        oprint(obj)
+
+    return decorator.decorate(fun, object_print_decorator)
+
+
+def add_typed_subcommands(type_):
+    def add_fun(fun, attribute_name):
+        @fun.command(name=attribute_name)
+        @click.make_pass_decorator(type_)
+        def type_cmd(obj):
+            print(getattr(obj, attribute_name))
+
+    def decorator(fun):
+        for attribute_name, attribute_type in type_.openapi_types.items():
+            add_fun(fun, attribute_name)
+
+        setattr(fun, 'invoke_without_command', True)
+
+        return fun
+
+    return decorator
+
+
+class EnumType(click.Choice):
+    def __init__(self, enum, casesensitive=True):
+        if isinstance(enum, EnumMeta):
+            choices = enum.__members__
+        else:
+            raise TypeError("`enum` must be `Enum`")
+
+        if not casesensitive:
+            choices = (_.lower() for _ in choices)
+
+        self.__enum = enum
+        self.__casesensitive = casesensitive
+
+        # TODO choices do not have the save order as enum
+        super(EnumType, self).__init__(list(sorted(set(choices))))
+
+    def convert(self, value, param, state):
+        if not self.__casesensitive:
+            value = value.lower()
+
+        value = super(EnumType, self).convert(value, param, state)
+
+        if not self.__casesensitive:
+            return next(_ for _ in self._EnumType__enum if _.name.lower() ==
+                        value.lower())
+        else:
+            return next(_ for _ in self._EnumType__enum if _.name == value)
+
+    def get_metavar(self, param):
+        word = self.__enum.__name__
+
+        # Stolen from jpvanhal/inflection
+        word = re.sub(r"([A-Z]+)([A-Z][a-z])", r'\1_\2', word)
+        word = re.sub(r"([a-z\d])([A-Z])", r'\1_\2', word)
+        word = word.replace("-", "_").lower().split("_")
+
+        if word[-1] == "enum":
+            word.pop()
+
+        return ("_".join(word)).upper()

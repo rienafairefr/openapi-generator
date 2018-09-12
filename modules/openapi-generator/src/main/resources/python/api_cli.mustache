@@ -1,50 +1,73 @@
+# coding: utf-8
+{{>partial_header}}
+from __future__ import absolute_import
 
-{{# groups }}
-    {{# isGroup }}
-        {{# parent.operationIdLowerCase }}
-            @{{{parent.operationIdLowerCase}}}.group()
-        {{/ parent.operationIdLowerCase }}
-        {{^ parent.operationIdLowerCase }}
-            @click.group()
-        {{/ parent.operationIdLowerCase }}
-    {{/ isGroup }}
-    {{^ isGroup }}
-        {{# parent.operationIdLowerCase }}
-            @{{{parent.operationIdLowerCase}}}.command()
-        {{/ parent.operationIdLowerCase }}
-        {{^ parent.operationIdLowerCase }}
-            @main.command()
-        {{/ parent.operationIdLowerCase }}
-    {{/ isGroup }}
-    {{# queryParams }}
-        {{# isPrimitiveType }}
-            @click.argument("--{{paramName}}", type={{dataType}})
-        {{/ isPrimitiveType }}
-        {{^ isPrimitiveType }}
-            {{# isListContainer }}
-                @click.argument("--{{paramName}}", type={{baseType}}, multiple=True)
-            {{/ isListContainer }}
-            {{^ isListContainer }}
-                {{# isMapContainer }}
-                {{/ isMapContainer }}
-                {{^ isMapContainer }}
-                {{/ isMapContainer }}
-                @model_{{dataType}}
-                {{ /isListContainer }}
-                {{ /isPrimitiveType }}
-                {{ /queryParams }}
-                def {{operationIdLowerCase}}({{#sortParamsByRequiredFlag}}{{#allParams}}{{#required}}{{paramName}}, {{/required}}{{/allParams}}{{/sortParamsByRequiredFlag}}):  # noqa: E501
-                # {{httpMethod}} {{path}}
-                pass
+try:
+    from enum import Enum, EnumMeta
+except ImportError:
+    from enum34 import Enum, EnumMeta
 
-            {{/ groups }}
+from {{packageName}}.cli import *
+from {{packageName}} import *
 
 
-        {{/hasChildren}}
-        {{^ hasChildren }}
-            @click.command()
-            def {{ name }}():
-            pass
-        {{/ hasChildren }}
+@click.group()
+@click.option('--output', '-o',
+        help='output printer (json, yaml, py --regular print Python function--)',
+        type=EnumType(OutputFormat, casesensitive=False), default="py")
+@click.pass_context
+def main(ctx, output):
+    format = None
+    if output == OutputFormat.json:
+        format = OutputFormatter(output=lambda o: print(json.dumps(o.to_dict(), default=str)))
+    elif output == OutputFormat.yaml:
+        format = OutputFormatter(output=lambda o: print(yaml.dump(o.to_dict(), default_flow_style=False)))
+    elif output == OutputFormat.py:
+        format = OutputFormatter(output=lambda o: print(o))
+
+    configuration = Configuration()
+    ctx.obj = State(format=format, api={{classname}}(configuration))
 
 
+{{# cliCommands }}
+# {{ this }}
+    {{# name }}
+    {{# operation }}
+        {{#returnType}}
+            {{^returnTypeIsPrimitive}}
+                {{^ isListContainer }}
+@add_typed_subcommands({{returnType}})
+                {{/ isListContainer }}
+            {{/returnTypeIsPrimitive}}
+        {{/returnType}}
+    {{/operation}}
+@{{{parent.fullName}}}.{{# isGroup }}group{{/isGroup}}{{^isGroup}}command{{/isGroup}}(name="{{ cliName }}")
+    {{^ isSingleCommandGroup }}
+    {{^ operation }}
+def {{fullName}}():
+    pass
+    {{/operation}}
+    {{/ isSingleCommandGroup }}
+    {{# isSingleCommandGroup }}
+@get_or_push
+    {{/ isSingleCommandGroup }}
+    {{# operation }}
+        {{# queryParams }}
+            {{# isPrimitiveType }}
+@click.option("--{{paramName}}", type={{dataType}})
+            {{/ isPrimitiveType }}
+            {{^ isPrimitiveType }}
+# complex type argument {{ dataType }}
+            {{/ isPrimitiveType }}
+        {{/ queryParams }}
+@pass_state
+def {{fullName}}(state, {{#queryParams}}{{paramName}}{{#hasMore}}, {{/hasMore }}{{/queryParams}}):  # noqa: E501
+    # {{httpMethod}} {{path}}
+    state.api.{{operationIdLowerCase}}({{#queryParams}}{{paramName}}{{#hasMore}}, {{/hasMore }}{{/queryParams}})
+    {{/operation}}
+
+
+    {{/name}}
+{{/ cliCommands }}
+if __name__ == '__main__':
+    main()
