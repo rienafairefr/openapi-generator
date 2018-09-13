@@ -1,0 +1,11 @@
+{{# isPrimitiveType }}
+@click.option("--{{paramName}}", type={{dataType}}{{#required}}, required=True{{/required}})
+{{/ isPrimitiveType }}
+{{^ isPrimitiveType }}
+    {{# isListContainer }}
+@click.option("--{{paramName}}", type=typedCommaArrayType({{baseType}}){{#required}}, required=True{{/required}})
+    {{/isListContainer}}
+    {{^ isListContainer }}
+@typed_command_parameter("{{paramName}}", {{ dataType }})
+    {{/isListContainer}}
+{{/ isPrimitiveType }}

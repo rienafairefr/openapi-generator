@@ -252,7 +252,7 @@ public class CodegenOperation {
 
     @Override
     public String toString() {
-        return String.format(Locale.ROOT, "%s(%s)", baseName, path);
+        return String.format(Locale.ROOT, "%s(%s):%s", baseName, path, httpMethod);
     }
 
     @Override

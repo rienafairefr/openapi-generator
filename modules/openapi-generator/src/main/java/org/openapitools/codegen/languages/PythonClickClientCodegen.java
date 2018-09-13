@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class CommandNode {
     public String name;
@@ -21,6 +23,7 @@ class CommandNode {
     public Map<String, CommandNode> children = new TreeMap<>();
     public CommandNode parent;
     public boolean isSingleCommandGroup = false;
+    public boolean isSelectorGroup = false;
     public boolean isGroup = false;
 
 
@@ -36,6 +39,7 @@ class CommandNode {
     }
 
     private static final Pattern FORWARD_SLASH = Pattern.compile("\\/");
+    public List<CodegenParameter> selectorParams = new ArrayList<>();
 
     public CommandNode(CodegenOperation operation, String name, CommandNode parent) {
         this.operation = operation;
@@ -77,7 +81,15 @@ class CommandNode {
 
     @Override
     public String toString() {
-        return name + " " + cliName + " " + operation + " " + isGroup;
+        return "CommandNode{" +
+                "name='" + name + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", operation=" + operation +
+                ", cliName='" + cliName + '\'' +
+                ", isSingleCommandGroup=" + isSingleCommandGroup +
+                ", isSelectorGroup=" + isSelectorGroup +
+                ", isGroup=" + isGroup +
+                '}';
     }
 
     public void print() {
@@ -85,7 +97,7 @@ class CommandNode {
     }
 
     private void print(String prefix, boolean isTail) {
-        System.out.println(prefix + (isTail ? "└── " : "├── ") + this.fullName);
+        System.out.println(prefix + (isTail ? "└── " : "├── ") + this);
 
         List<CommandNode> childrenNodes = new ArrayList<>(children.values());
         for (int i = 0; i < childrenNodes.size() - 1; i++) {
@@ -130,22 +142,39 @@ class TreeWalker {
 
     private List<CommandNode> walk(CommandNode commandNode, List<CommandNode> current){
         current.add(commandNode);
+        for (CommandNode child: commandNode.children.values()) {
+            walk(child, current);
+        }
         if (commandNode.children.size() > 0) {
             commandNode.isGroup = true;
-            if (commandNode.children.size() == 1) {
-                if (commandNode.children.containsKey("GET")) {
+            if (commandNode.children.containsKey("GET")) {
+                if (commandNode.children.size() == 1) {
                     CommandNode child = commandNode.children.get("GET");
+                    commandNode.children.remove("GET");
                     current.remove(child);
                     commandNode.isSingleCommandGroup = true;
                     commandNode.operation = child.operation;
+                    return current;
                 }
+
+                CommandNode child = commandNode.children.get("GET");
+                commandNode.children.remove("GET");
+                current.remove(child);
+                commandNode.isSelectorGroup = true;
+                commandNode.operation = child.operation;
+                // extract selector params
+                commandNode.selectorParams = commandNode.operation.pathParams.stream()
+                        .filter(param -> commandNode.name.contains(param.baseName)).collect(Collectors.toList());
+
+                commandNode.operation.allParams.removeAll(commandNode.selectorParams);
+
+                return current;
             }
-            for (CommandNode child: commandNode.children.values()) {
-                walk(child, current);
-            }
+
         }
         if (commandNode.operation != null) {
-            if (!commandNode.operation.returnTypeIsPrimitive) {
+            CodegenOperation operation = commandNode.operation;
+            if (!operation.returnTypeIsPrimitive) {
                 commandNode.isGroup = true;
             }
         }
@@ -193,36 +222,44 @@ public class PythonClickClientCodegen extends PythonClientCodegen {
         objs.put("click", true);
 
         @SuppressWarnings("unchecked")
-        Map<String, CodegenParameter> cliPathParamsMap = new HashMap<>();
+        Map<String, CodegenParameter> cliStateParamsMap = new HashMap<>();
         for (CodegenOperation codegenOperation: operations) {
-            for (CodegenParameter param: codegenOperation.pathParams) {
+            for (CodegenParameter param: codegenOperation.allParams) {
+                if (param.isQueryParam || param.isBodyParam || param.isCookieParam) {
+                    continue;
+                }
                 CodegenParameter codegenParameter = param.copy();
                 codegenParameter.hasMore = true;
-                cliPathParamsMap.put(codegenParameter.paramName, codegenParameter);
+                cliStateParamsMap.put(codegenParameter.paramName, codegenParameter);
             }
         }
 
-        List<CodegenParameter> cliPathParams = new ArrayList<>(cliPathParamsMap.values());
+        List<CodegenParameter> cliStateParams = new ArrayList<>(cliStateParamsMap.values());
         try {
-            CodegenParameter codegenParameter = Iterables.getLast(cliPathParams);
+            CodegenParameter codegenParameter = Iterables.getLast(cliStateParams);
             codegenParameter.hasMore = false;
         } catch (NoSuchElementException ignored) {
         }
 
-        walker.root.print();
-
         List<CommandNode> cliCommands = walker.walk();
 
         for (CommandNode node: cliCommands) {
-            if (node.name != null && node.name.contains("/")){
-                node.children
-                String pathParams = node.name.replace(node.cliName + "/", "");
-
+            List<CommandNode> sameFullName = cliCommands.stream().filter(c -> c.fullName.equals(node.fullName)).collect(Collectors.toList());
+            if (sameFullName.size() > 1){
+                for (CommandNode commandNode: sameFullName) {
+                    if (!commandNode.isSelectorGroup) {
+                        commandNode.name = commandNode.name + "_";
+                        commandNode.fullName = commandNode.fullName + "_";
+                        commandNode.cliName = commandNode.cliName + "_";
+                    }
+                }
             }
         }
 
+        walker.root.print();
+
         objs.put("cliCommands", cliCommands);
-        objs.put("cliPathParams", cliPathParams);
+        objs.put("cliStateParams", cliStateParams);
 
         return objs;
     }

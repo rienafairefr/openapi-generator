@@ -14,12 +14,12 @@ from {{packageName}} import *
 
 
 class State(object):
-    def __init__(self, api=None, format=None, {{# cliPathParams}}{{paramName}}=None{{#hasMore}}, {{/hasMore }}{{/cliPathParams}}):
+    def __init__(self, api=None, format=None{{# cliStateParams }}, {{paramName}}=None{{/ cliStateParams }}):
         self.api = api
         self.format = format
-{{# cliPathParams}}
+{{# cliStateParams }}
         self.{{paramName}} = {{paramName}}
-{{/cliPathParams}}
+{{/ cliStateParams }}
 
 
 pass_state = click.make_pass_decorator(State)
@@ -71,6 +71,56 @@ def add_typed_subcommands(type_):
     return decorator
 
 
+def typedCommaArrayType(type_):
+    class CommaArrayType(click.ParamType):
+        name = 'comma-separated-%s' % type_
+
+        def convert(self, value, param, ctx):
+            try:
+                return [type_(val) for val in value.split(',')]
+            except ValueError:
+                self.fail('%s is not a valid list of %s' % (value, type_), param, ctx)
+
+    return CommaArrayType()
+
+
+def typed_command_parameter(param_name, type_):
+    def decorator(fun):
+        current = fun
+
+        for option in list_arguments(param_name, type_, []):
+            current = option(current)
+
+        return current
+
+    def str_to_class(klass):
+        # convert str to class
+        if klass in ApiClient.NATIVE_TYPES_MAPPING:
+            return ApiClient.NATIVE_TYPES_MAPPING[klass]
+        else:
+            return getattr(petstore.models, klass)
+
+    def list_arguments(current_param_name, this_type, current_list):
+        for attribute_name, attribute_type in this_type.openapi_types.items():
+
+            arguments = []
+
+            if attribute_type.startswith('list['):
+                sub_klass = re.match('list\[(.*)\]', attribute_type).group(1)
+                arguments.append(click.option('--%s_%s' % (current_param_name, attribute_name), type=sub_klass, multiple=True))
+            else:
+                klass = str_to_class(attribute_type)
+                if klass in ApiClient.PRIMITIVE_TYPES:
+                    arguments.append(click.option('--%s_%s' % (current_param_name, attribute_name), type=klass))
+                else:
+                    child_arguments = list_arguments(current_param_name + "_" + attribute_name, klass, [])
+                    arguments.extend(child_arguments)
+
+            current_list.extend(arguments)
+        return current_list
+
+    return decorator
+
 
 @click.group()
 @click.pass_context
@@ -80,7 +130,7 @@ def main(ctx):
 
 
 {{# cliCommands }}
-# {{ this }}
+# {{{ this }}} # noqa: 501
     {{# name }}
     {{# operation }}
         {{#returnType}}
@@ -93,27 +143,41 @@ def main(ctx):
     {{/operation}}
     {{# isGroup }}
 @{{{parent.fullName}}}.group(name="{{ cliName }}")
-@get_or_push
     {{/ isGroup }}
     {{^ isGroup }}
 @{{{parent.fullName}}}.command(name="{{ cliName }}")
 @object_print
     {{/ isGroup }}
+    {{# isSelectorGroup }}
+        {{# operation }}
+            {{# pathParams }}
+@click.argument("{{paramName}}", type={{dataType}})
+        {{/pathParams}}
+        {{/ operation }}
+@get_or_push
+    {{/isSelectorGroup}}
     {{# operation }}
         {{# queryParams }}
-            {{# isPrimitiveType }}
-@click.option("--{{paramName}}", type={{dataType}})
-            {{/ isPrimitiveType }}
-            {{^ isPrimitiveType }}
-# complex type argument {{ dataType }}
-            {{/ isPrimitiveType }}
+            {{> cli_param }}
         {{/ queryParams }}
+        {{# bodyParams }}
+            {{> cli_param }}
+        {{/bodyParams}}
 @pass_state
-    {{/operation}}
-def {{fullName}}(state, {{#queryParams}}{{paramName}}{{#hasMore}}, {{/hasMore }}{{/queryParams}}):  # noqa: E501
+def {{fullName}}(state{{#queryParams}}, {{paramName}}{{/queryParams}}{{#selectorParams}}, {{paramName}}{{/selectorParams}}):
     # {{httpMethod}} {{path}}
-    return state.api.{{operationIdLowerCase}}({{#queryParams}}{{paramName}}{{#hasMore}}, {{/hasMore }}{{/queryParams}})
-
+        {{# headerParams }}
+    {{paramName}}=state.{{paramName}}
+        {{/headerParams}}
+        {{# pathParams }}
+    {{paramName}}=state.{{paramName}}
+        {{/pathParams}}
+    return state.api.{{operationIdLowerCase}}({{#allParams}}{{paramName}}{{# hasMore }}, {{/hasMore}}{{/allParams}})
+    {{/operation}}
+    {{^ operation }}
+def {{fullName}}():
+    pass
+    {{/ operation }}
 
 
     {{/name}}
