@@ -115,6 +115,8 @@ class ApiClient(object):
             response_types=None):
 
         config = self.configuration
+        if response_types is None:
+            response_types = {}
 
         # header parameters
         header_params = header_params or {}
