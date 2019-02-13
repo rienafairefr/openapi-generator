@@ -109,6 +109,11 @@ class FakeApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            400: ''
+        }
+
         return self.api_client.call_api(
             '/fake', 'PUT',
             path_params,
@@ -117,6 +122,7 @@ class FakeApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type=None,  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),

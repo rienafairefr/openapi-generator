@@ -112,6 +112,11 @@ class UserApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            0: ''
+        }
+
         return self.api_client.call_api(
             '/user', 'POST',
             path_params,
@@ -120,6 +125,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type=None,  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -206,6 +212,11 @@ class UserApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            0: ''
+        }
+
         return self.api_client.call_api(
             '/user/createWithArray', 'POST',
             path_params,
@@ -214,6 +225,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type=None,  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -300,6 +312,11 @@ class UserApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            0: ''
+        }
+
         return self.api_client.call_api(
             '/user/createWithList', 'POST',
             path_params,
@@ -308,6 +325,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type=None,  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -392,6 +410,12 @@ class UserApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            400: '',
+            404: ''
+        }
+
         return self.api_client.call_api(
             '/user/{username}', 'DELETE',
             path_params,
@@ -400,6 +424,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type=None,  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -486,6 +511,13 @@ class UserApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            200: 'User',
+            400: 'User',
+            404: 'User'
+        }
+
         return self.api_client.call_api(
             '/user/{username}', 'GET',
             path_params,
@@ -494,6 +526,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type='User',  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -588,6 +621,12 @@ class UserApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            200: 'str',
+            400: 'str'
+        }
+
         return self.api_client.call_api(
             '/user/login', 'GET',
             path_params,
@@ -596,6 +635,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type='str',  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -670,6 +710,11 @@ class UserApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            0: ''
+        }
+
         return self.api_client.call_api(
             '/user/logout', 'GET',
             path_params,
@@ -678,6 +723,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type=None,  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -774,6 +820,12 @@ class UserApi(object):
         # Authentication setting
         auth_settings = []  # noqa: E501
 
+        # multiple potential response types
+        response_types = {
+            400: '',
+            404: ''
+        }
+
         return self.api_client.call_api(
             '/user/{username}', 'PUT',
             path_params,
@@ -782,6 +834,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            response_types=response_types,
             response_type=None,  # noqa: E501
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
