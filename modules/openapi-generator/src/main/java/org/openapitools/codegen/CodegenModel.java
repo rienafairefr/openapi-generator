@@ -629,4 +629,8 @@ public class CodegenModel {
             }
         }
     }
+
+    public boolean isComposed() {
+        return !allOf.isEmpty() || !oneOf.isEmpty() || !anyOf.isEmpty();
+    }
 }
