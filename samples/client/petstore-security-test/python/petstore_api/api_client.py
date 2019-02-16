@@ -110,7 +110,7 @@ class ApiClient(object):
             query_params=None, header_params=None, body=None, post_params=None,
             files=None, response_type=None, auth_settings=None,
             _return_http_data_only=None, collection_formats=None,
-            _preload_content=True, _request_timeout=None):
+            _preload_content=True, _request_timeout=None, _host=None):
 
         config = self.configuration
 
@@ -157,7 +157,11 @@ class ApiClient(object):
             body = self.sanitize_for_serialization(body)
 
         # request url
-        url = self.configuration.host + resource_path
+        if _host is None:
+            url = self.configuration.host + resource_path
+        else:
+            # use server/host defined in path or operation instead
+            url = _host + resource_path
 
         # perform request and return response
         response_data = self.request(
@@ -290,7 +294,7 @@ class ApiClient(object):
                  body=None, post_params=None, files=None,
                  response_type=None, auth_settings=None, async_req=None,
                  _return_http_data_only=None, collection_formats=None,
-                 _preload_content=True, _request_timeout=None):
+                 _preload_content=True, _request_timeout=None, _host=None):
         """Makes the HTTP request (synchronous) and returns deserialized data.
 
         To make an async_req request, set the async_req parameter.
@@ -333,7 +337,7 @@ class ApiClient(object):
                                    body, post_params, files,
                                    response_type, auth_settings,
                                    _return_http_data_only, collection_formats,
-                                   _preload_content, _request_timeout)
+                                   _preload_content, _request_timeout, _host)
         else:
             thread = self.pool.apply_async(self.__call_api, (resource_path,
                                            method, path_params, query_params,
@@ -342,7 +346,9 @@ class ApiClient(object):
                                            response_type, auth_settings,
                                            _return_http_data_only,
                                            collection_formats,
-                                           _preload_content, _request_timeout))
+                                           _preload_content,
+                                           _request_timeout,
+                                           _host))
         return thread
 
     def request(self, method, url, query_params=None, headers=None,
@@ -627,6 +633,55 @@ class ApiClient(object):
                     kwargs[attr] = self.__deserialize(value, attr_type)
 
         instance = klass(**kwargs)
+
+        if hasattr(instance, 'composed_hierarchy'):
+            hierarchy = instance.composed_hierarchy
+            if sum([1 if v else 0 for v in hierarchy.values()]) > 1:
+                # ignore implicit AllOf
+                return instance
+
+            def error_msg(composed):
+                return "Failed to parse `{0}` as {1} ({2} {3})" \
+                    .format(data, klass,
+                            composed,
+                            ' '.join(hierarchy[composed]))
+
+            if hierarchy['allOf']:
+                matches = []
+                for sub_klass in hierarchy['allOf']:
+                    try:
+                        matches.append(self.__deserialize(data, sub_klass))
+                    except:  # noqa: E722
+                        pass
+                if len(matches) == len(hierarchy['allOf']):
+                    return instance
+
+                # not all matched -> error
+                raise rest.ApiException(status=0, reason=error_msg('allOf'))
+
+            if hierarchy['anyOf']:
+                for sub_klass in hierarchy['anyOf']:
+                    try:
+                        # if at least one of the sub-class matches
+                        # terminate with an instance of this class
+                        return self.__deserialize(data, sub_klass)
+                    except:  # noqa: E722
+                        pass
+                # none matched -> error
+                raise rest.ApiException(status=0, reason=error_msg('anyOf'))
+
+            if hierarchy['oneOf']:
+                matches = []
+                for sub_klass in hierarchy['oneOf']:
+                    try:
+                        matches.append(self.__deserialize(data, sub_klass))
+                    except:  # noqa: E722
+                        pass
+                if len(matches) == 1:
+                    return matches[0]
+
+                # none matched, or more than one matched -> error
+                raise rest.ApiException(status=0, reason=error_msg('oneOf'))
 
         if hasattr(instance, 'get_real_child_model'):
             klass_name = instance.get_real_child_model(data)
