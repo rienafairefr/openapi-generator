@@ -316,7 +316,7 @@ class PetApi(object):
         # multiple potential response types
         response_types = {
             200: 'list[Pet]',
-            400: 'list[Pet]'
+            400: ''
         }
 
         return self.api_client.call_api(
@@ -420,7 +420,7 @@ class PetApi(object):
         # multiple potential response types
         response_types = {
             200: 'list[Pet]',
-            400: 'list[Pet]'
+            400: ''
         }
 
         return self.api_client.call_api(
@@ -523,8 +523,8 @@ class PetApi(object):
         # multiple potential response types
         response_types = {
             200: 'Pet',
-            400: 'Pet',
-            404: 'Pet'
+            400: '',
+            404: ''
         }
 
         return self.api_client.call_api(

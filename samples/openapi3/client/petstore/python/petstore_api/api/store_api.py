@@ -312,8 +312,8 @@ class StoreApi(object):
         # multiple potential response types
         response_types = {
             200: 'Order',
-            400: 'Order',
-            404: 'Order'
+            400: '',
+            404: ''
         }
 
         return self.api_client.call_api(
@@ -418,7 +418,7 @@ class StoreApi(object):
         # multiple potential response types
         response_types = {
             200: 'Order',
-            400: 'Order'
+            400: ''
         }
 
         return self.api_client.call_api(
