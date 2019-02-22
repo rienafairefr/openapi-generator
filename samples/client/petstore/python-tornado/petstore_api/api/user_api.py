@@ -502,8 +502,8 @@ class UserApi(object):
         # multiple potential response types
         response_types = {
             200: 'User',
-            400: 'User',
-            404: 'User'
+            400: '',
+            404: ''
         }
 
         return self.api_client.call_api(
@@ -612,7 +612,7 @@ class UserApi(object):
         # multiple potential response types
         response_types = {
             200: 'str',
-            400: 'str'
+            400: ''
         }
 
         return self.api_client.call_api(
