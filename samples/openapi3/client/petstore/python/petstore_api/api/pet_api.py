@@ -118,7 +118,7 @@ class PetApi(object):
 
         # multiple potential response types
         response_types = {
-            405: ''
+            405: None
         }
 
         return self.api_client.call_api(
@@ -218,7 +218,7 @@ class PetApi(object):
 
         # multiple potential response types
         response_types = {
-            400: ''
+            400: None
         }
 
         return self.api_client.call_api(
@@ -321,7 +321,7 @@ class PetApi(object):
         # multiple potential response types
         response_types = {
             200: 'list[Pet]',
-            400: ''
+            400: None
         }
 
         return self.api_client.call_api(
@@ -424,7 +424,7 @@ class PetApi(object):
         # multiple potential response types
         response_types = {
             200: 'list[Pet]',
-            400: ''
+            400: None
         }
 
         return self.api_client.call_api(
@@ -526,8 +526,8 @@ class PetApi(object):
         # multiple potential response types
         response_types = {
             200: 'Pet',
-            400: '',
-            404: ''
+            400: None,
+            404: None
         }
 
         return self.api_client.call_api(
@@ -632,9 +632,9 @@ class PetApi(object):
 
         # multiple potential response types
         response_types = {
-            400: '',
-            404: '',
-            405: ''
+            400: None,
+            404: None,
+            405: None
         }
 
         return self.api_client.call_api(
@@ -742,7 +742,7 @@ class PetApi(object):
 
         # multiple potential response types
         response_types = {
-            405: ''
+            405: None
         }
 
         return self.api_client.call_api(

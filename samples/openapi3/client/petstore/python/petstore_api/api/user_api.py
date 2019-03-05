@@ -114,7 +114,7 @@ class UserApi(object):
 
         # multiple potential response types
         response_types = {
-            0: ''
+            0: None
         }
 
         return self.api_client.call_api(
@@ -213,7 +213,7 @@ class UserApi(object):
 
         # multiple potential response types
         response_types = {
-            0: ''
+            0: None
         }
 
         return self.api_client.call_api(
@@ -312,7 +312,7 @@ class UserApi(object):
 
         # multiple potential response types
         response_types = {
-            0: ''
+            0: None
         }
 
         return self.api_client.call_api(
@@ -409,8 +409,8 @@ class UserApi(object):
 
         # multiple potential response types
         response_types = {
-            400: '',
-            404: ''
+            400: None,
+            404: None
         }
 
         return self.api_client.call_api(
@@ -510,8 +510,8 @@ class UserApi(object):
         # multiple potential response types
         response_types = {
             200: 'User',
-            400: '',
-            404: ''
+            400: None,
+            404: None
         }
 
         return self.api_client.call_api(
@@ -619,7 +619,7 @@ class UserApi(object):
         # multiple potential response types
         response_types = {
             200: 'str',
-            400: ''
+            400: None
         }
 
         return self.api_client.call_api(
@@ -706,7 +706,7 @@ class UserApi(object):
 
         # multiple potential response types
         response_types = {
-            0: ''
+            0: None
         }
 
         return self.api_client.call_api(
@@ -815,8 +815,8 @@ class UserApi(object):
 
         # multiple potential response types
         response_types = {
-            400: '',
-            404: ''
+            400: None,
+            404: None
         }
 
         return self.api_client.call_api(

@@ -297,10 +297,9 @@ class ApiClient(object):
     def call_api(self, resource_path, method,
                  path_params=None, query_params=None, header_params=None,
                  body=None, post_params=None, files=None,
-                 response_type=None, auth_settings=None, async_req=None,
+                 response_types=None, auth_settings=None, async_req=None,
                  _return_http_data_only=None, collection_formats=None,
-                 _preload_content=True, _request_timeout=None, _host=None,
-                 response_types=None):
+                 _preload_content=True, _request_timeout=None, _host=None):
         """Makes the HTTP request (synchronous) and returns deserialized data.
 
         To make an async_req request, set the async_req parameter.
@@ -341,21 +340,21 @@ class ApiClient(object):
             return self.__call_api(resource_path, method,
                                    path_params, query_params, header_params,
                                    body, post_params, files,
-                                   response_type, auth_settings,
+                                   response_types, auth_settings,
                                    _return_http_data_only, collection_formats,
                                    _preload_content, _request_timeout,
-                                   _host, response_types)
+                                   _host)
         else:
             thread = self.pool.apply_async(self.__call_api, (resource_path,
                                            method, path_params, query_params,
                                            header_params, body,
                                            post_params, files,
-                                           response_type, auth_settings,
+                                           response_types, auth_settings,
                                            _return_http_data_only,
                                            collection_formats,
                                            _preload_content,
                                            _request_timeout,
-                                           _host, response_types))
+                                           _host))
         return thread
 
     def request(self, method, url, query_params=None, headers=None,
