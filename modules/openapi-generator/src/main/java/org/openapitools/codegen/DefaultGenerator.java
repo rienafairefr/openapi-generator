@@ -17,8 +17,6 @@
 
 package org.openapitools.codegen;
 
-import com.samskivert.mustache.Mustache;
-import com.samskivert.mustache.Template;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -40,7 +38,6 @@ import org.openapitools.codegen.ignore.CodegenIgnoreProcessor;
 //import org.openapitools.codegen.languages.AbstractJavaCodegen;
 import org.openapitools.codegen.templating.MustacheEngineAdapter;
 import org.openapitools.codegen.config.GeneratorProperties;
-import org.openapitools.codegen.ignore.CodegenIgnoreProcessor;
 import org.openapitools.codegen.utils.ImplementationVersion;
 import org.openapitools.codegen.utils.ModelUtils;
 import org.openapitools.codegen.utils.URLPathUtils;
@@ -713,7 +710,7 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
                 if (ignoreProcessor.allowsFile(new File(outputFilename))) {
                     if (Arrays.stream(templatingEngine.getFileExtensions()).anyMatch(templateFile::endsWith)) {
                         configPostProcessMustacheCompiler();
-                        String templateContent = templatingEngine.doProcessTemplateToFile(this, bundle, support.templateFile);
+                        String templateContent = templatingEngine.compileTemplate(this, bundle, support.templateFile);
                         writeToFile(outputFilename, templateContent);
                         File written = new File(outputFilename);
                         files.add(written);
@@ -921,7 +918,7 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
         String adjustedOutputFilename = outputFilename.replaceAll("//", "/").replace('/', File.separatorChar);
         if (ignoreProcessor.allowsFile(new File(adjustedOutputFilename))) {
             configPostProcessMustacheCompiler();
-            String templateContent = templatingEngine.doProcessTemplateToFile(this, templateData, templateName);
+            String templateContent = templatingEngine.compileTemplate(this, templateData, templateName);
             writeToFile(adjustedOutputFilename, templateContent);
             return new File(adjustedOutputFilename);
         }
