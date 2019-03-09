@@ -709,7 +709,6 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
 
                 if (ignoreProcessor.allowsFile(new File(outputFilename))) {
                     if (Arrays.stream(templatingEngine.getFileExtensions()).anyMatch(templateFile::endsWith)) {
-                        configPostProcessMustacheCompiler();
                         String templateContent = templatingEngine.compileTemplate(this, bundle, support.templateFile);
                         writeToFile(outputFilename, templateContent);
                         File written = new File(outputFilename);
@@ -889,6 +888,9 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
         configureGeneratorProperties();
         configureOpenAPIInfo();
 
+        // If the template adapter is mustache, we'll set the config-modified Compiler.
+        configPostProcessMustacheCompiler();
+
         List<File> files = new ArrayList<File>();
         // models
         List<String> filteredSchemas = ModelUtils.getSchemasUsedOnlyInFormParam(openAPI);
@@ -917,7 +919,6 @@ public class DefaultGenerator extends AbstractGenerator implements Generator {
     protected File processTemplateToFile(Map<String, Object> templateData, String templateName, String outputFilename) throws IOException {
         String adjustedOutputFilename = outputFilename.replaceAll("//", "/").replace('/', File.separatorChar);
         if (ignoreProcessor.allowsFile(new File(adjustedOutputFilename))) {
-            configPostProcessMustacheCompiler();
             String templateContent = templatingEngine.compileTemplate(this, templateData, templateName);
             writeToFile(adjustedOutputFilename, templateContent);
             return new File(adjustedOutputFilename);
