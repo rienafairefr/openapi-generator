@@ -10,12 +10,12 @@ class PetApi {
   /// Add a new pet to the store
   ///
   /// 
-  Future addPet(Pet pet) async {
-    Object postBody = pet;
+  Future addPet(Pet body) async {
+    Object postBody = body;
 
     // verify required params are set
-    if(pet == null) {
-     throw new ApiException(400, "Missing required param: pet");
+    if(body == null) {
+     throw new ApiException(400, "Missing required param: body");
     }
 
     // create path and map variables
@@ -50,7 +50,7 @@ class PetApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -100,7 +100,7 @@ class PetApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -150,9 +150,9 @@ class PetApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return (apiClient.deserialize(response.body, 'List<Pet>') as List).map((item) => item as Pet).toList();
+      return (apiClient.deserialize(_decodeBodyBytes(response), 'List<Pet>') as List).map((item) => item as Pet).toList();
     } else {
       return null;
     }
@@ -201,9 +201,9 @@ class PetApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return (apiClient.deserialize(response.body, 'List<Pet>') as List).map((item) => item as Pet).toList();
+      return (apiClient.deserialize(_decodeBodyBytes(response), 'List<Pet>') as List).map((item) => item as Pet).toList();
     } else {
       return null;
     }
@@ -251,9 +251,9 @@ class PetApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return apiClient.deserialize(response.body, 'Pet') as Pet;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'Pet') as Pet;
     } else {
       return null;
     }
@@ -261,12 +261,12 @@ class PetApi {
   /// Update an existing pet
   ///
   /// 
-  Future updatePet(Pet pet) async {
-    Object postBody = pet;
+  Future updatePet(Pet body) async {
+    Object postBody = body;
 
     // verify required params are set
-    if(pet == null) {
-     throw new ApiException(400, "Missing required param: pet");
+    if(body == null) {
+     throw new ApiException(400, "Missing required param: body");
     }
 
     // create path and map variables
@@ -301,7 +301,7 @@ class PetApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -362,7 +362,7 @@ class PetApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -422,9 +422,9 @@ class PetApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return apiClient.deserialize(response.body, 'ApiResponse') as ApiResponse;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'ApiResponse') as ApiResponse;
     } else {
       return null;
     }

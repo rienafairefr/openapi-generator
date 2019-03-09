@@ -17,25 +17,27 @@
 
 package org.openapitools.codegen.languages;
 
-import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenConstants;
-import org.openapitools.codegen.CodegenParameter;
-import org.openapitools.codegen.CodegenProperty;
-import org.openapitools.codegen.CodegenType;
-import org.openapitools.codegen.SupportingFile;
+import io.swagger.v3.oas.models.examples.Example;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import org.apache.commons.lang3.StringUtils;
+import org.openapitools.codegen.*;
+import org.openapitools.codegen.utils.ModelUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 
-import io.swagger.v3.oas.models.media.*;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public class RubyClientCodegen extends AbstractRubyCodegen {
     private static final Logger LOGGER = LoggerFactory.getLogger(RubyClientCodegen.class);
+    private static final String NUMERIC_ENUM_PREFIX = "N";
     public static final String GEM_NAME = "gemName";
     public static final String MODULE_NAME = "moduleName";
     public static final String GEM_VERSION = "gemVersion";
@@ -67,6 +69,8 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
     public RubyClientCodegen() {
         super();
 
+        supportsInheritance = true;
+
         // clear import mapping (from default generator) as ruby does not use it
         // at the moment
         importMapping.clear();
@@ -90,9 +94,8 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
         for (String word : Arrays.asList(
                 "local_var_path", "query_params", "header_params", "_header_accept", "_header_accept_result",
                 "_header_content_type", "form_params", "post_body", "auth_names")) {
-            reservedWords.add(word.toLowerCase());
+            reservedWords.add(word.toLowerCase(Locale.ROOT));
         }
-
 
         // primitives in ruby lang
         languageSpecificPrimitives.add("int");
@@ -112,6 +115,7 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
                 itr.remove();
             }
         }
+
         cliOptions.add(new CliOption(GEM_NAME, "gem name (convention: underscore_case).").
                 defaultValue("openapi_client"));
         cliOptions.add(new CliOption(MODULE_NAME, "top module name (convention: CamelCase, usually corresponding" +
@@ -220,7 +224,9 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
         supportingFiles.add(new SupportingFile("gitignore.mustache", "", ".gitignore"));
         supportingFiles.add(new SupportingFile("Rakefile.mustache", "", "Rakefile"));
         supportingFiles.add(new SupportingFile("Gemfile.mustache", "", "Gemfile"));
+        supportingFiles.add(new SupportingFile("Gemfile.lock.mustache", "", "Gemfile.lock"));
         supportingFiles.add(new SupportingFile("rubocop.mustache", "", ".rubocop.yml"));
+        supportingFiles.add(new SupportingFile("travis.mustache", "", ".travis.yml"));
 
         // test files should not be overwritten
         writeOptional(outputFolder, new SupportingFile("rspec.mustache", "", ".rspec"));
@@ -396,7 +402,7 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
         if ("Integer".equals(datatype) || "Float".equals(datatype)) {
             return value;
         } else {
-            return "'" + escapeText(value) + "'";
+            return "\"" + escapeText(value) + "\"";
         }
     }
 
@@ -412,16 +418,16 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
             varName = varName.replaceAll("-", "MINUS_");
             varName = varName.replaceAll("\\+", "PLUS_");
             varName = varName.replaceAll("\\.", "_DOT_");
-            return varName;
+            return NUMERIC_ENUM_PREFIX + varName;
         }
 
         // string
-        String enumName = sanitizeName(underscore(name).toUpperCase());
+        String enumName = sanitizeName(underscore(name).toUpperCase(Locale.ROOT));
         enumName = enumName.replaceFirst("^_", "");
         enumName = enumName.replaceFirst("_$", "");
 
         if (enumName.matches("\\d.*")) { // starts with number
-            return "N" + enumName;
+            return NUMERIC_ENUM_PREFIX + enumName;
         } else {
             return enumName;
         }
@@ -429,12 +435,12 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
 
     @Override
     public String toEnumName(CodegenProperty property) {
-        String enumName = underscore(toModelName(property.name)).toUpperCase();
+        String enumName = underscore(toModelName(property.name)).toUpperCase(Locale.ROOT);
         enumName = enumName.replaceFirst("^_", "");
         enumName = enumName.replaceFirst("_$", "");
 
         if (enumName.matches("\\d.*")) { // starts with number
-            return "N" + enumName;
+            return NUMERIC_ENUM_PREFIX + enumName;
         } else {
             return enumName;
         }
@@ -540,6 +546,34 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
         p.example = example;
     }
 
+    /**
+     * Return the example value of the parameter. Overrides the
+     * setParameterExampleValue(CodegenParameter, Parameter) method in
+     * DefaultCodegen to always call setParameterExampleValue(CodegenParameter)
+     * in this class, which adds single quotes around strings from the
+     * x-example property.
+     *
+     * @param codegenParameter Codegen parameter
+     * @param parameter        Parameter
+     */
+    public void setParameterExampleValue(CodegenParameter codegenParameter, Parameter parameter) {
+        if (parameter.getExample() != null) {
+            codegenParameter.example = parameter.getExample().toString();
+        } else if (parameter.getExamples() != null && !parameter.getExamples().isEmpty()) {
+            Example example = parameter.getExamples().values().iterator().next();
+            if (example.getValue() != null) {
+                codegenParameter.example = example.getValue().toString();
+            }
+        } else {
+            Schema schema = parameter.getSchema();
+            if (schema != null && schema.getExample() != null) {
+                codegenParameter.example = schema.getExample().toString();
+            }
+        }
+
+        setParameterExampleValue(codegenParameter);
+    }
+
     public void setGemName(String gemName) {
         this.gemName = gemName;
     }
@@ -581,10 +615,11 @@ public class RubyClientCodegen extends AbstractRubyCodegen {
     }
 
     @Override
-    public boolean shouldOverwrite(String filename) {
-        // skip spec file as the file might have been updated with new test cases
-        return !(skipOverwrite && new File(filename).exists());
-        //
-        //return super.shouldOverwrite(filename) && !filename.endsWith("_spec.rb");
+    protected void addAdditionPropertiesToCodeGenModel(CodegenModel codegenModel, Schema schema) {
+        final Schema additionalProperties = ModelUtils.getAdditionalProperties(schema);
+
+        if (additionalProperties != null) {
+            codegenModel.additionalPropertiesType = getSchemaType(additionalProperties);
+        }
     }
 }

@@ -17,21 +17,20 @@
 
 package org.openapitools.codegen.languages;
 
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.Schema;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.utils.ModelUtils;
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.media.*;
-import io.swagger.v3.core.util.Yaml;
-
-import java.util.*;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.*;
+
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public abstract class AbstractGoCodegen extends DefaultCodegen implements CodegenConfig {
 
@@ -116,6 +115,16 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
 
         cliOptions.add(new CliOption(CodegenConstants.HIDE_GENERATION_TIMESTAMP, CodegenConstants.HIDE_GENERATION_TIMESTAMP_DESC)
                 .defaultValue(Boolean.TRUE.toString()));
+    }
+
+    @Override
+    public void processOpts() {
+        super.processOpts();
+
+        if (StringUtils.isEmpty(System.getenv("GO_POST_PROCESS_FILE"))) {
+            LOGGER.info("Environment variable GO_POST_PROCESS_FILE not defined so Go code may not be properly formatted. To define it, try `export GO_POST_PROCESS_FILE=\"/usr/local/bin/gofmt -w\"` (Linux/Mac)");
+            LOGGER.info("NOTE: To enable file post-processing, 'enablePostProcessFile' must be set to `true` (--enable-post-process-file for CLI).");
+        }
     }
 
     /**
@@ -258,7 +267,7 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
             Schema inner = ap.getItems();
             return "[]" + getTypeDeclaration(inner);
         } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
+            Schema inner = ModelUtils.getAdditionalProperties(p);
             return getSchemaType(p) + "[string]" + getTypeDeclaration(inner);
         }
         //return super.getTypeDeclaration(p);
@@ -335,7 +344,7 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
         List<CodegenOperation> operations = (List<CodegenOperation>) objectMap.get("operation");
         for (CodegenOperation operation : operations) {
             // http method verb conversion (e.g. PUT => Put)
-            operation.httpMethod = camelize(operation.httpMethod.toLowerCase());
+            operation.httpMethod = camelize(operation.httpMethod.toLowerCase(Locale.ROOT));
         }
 
         // remove model imports to avoid error
@@ -377,8 +386,8 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
                     }
                 }
 
-                // import "optionals" package if the parameter is primitive and optional
-                if (!param.required && param.isPrimitiveType) {
+                // import "optionals" package if the parameter is optional
+                if (!param.required) {
                     if (!addedOptionalImport) {
                         imports.add(createMapping("import", "github.com/antihax/optional"));
                         addedOptionalImport = true;
@@ -389,7 +398,7 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
                     } else {
                         // Map optional type to dataType
                         param.vendorExtensions.put("x-optionalDataType",
-                                param.dataType.substring(0, 1).toUpperCase() + param.dataType.substring(1));
+                                param.dataType.substring(0, 1).toUpperCase(Locale.ROOT) + param.dataType.substring(1));
                     }
                 }
 
@@ -562,11 +571,11 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
 
         // for symbol, e.g. $, #
         if (getSymbolName(name) != null) {
-            return getSymbolName(name).toUpperCase();
+            return getSymbolName(name).toUpperCase(Locale.ROOT);
         }
 
         // string
-        String enumName = sanitizeName(underscore(name).toUpperCase());
+        String enumName = sanitizeName(underscore(name).toUpperCase(Locale.ROOT));
         enumName = enumName.replaceFirst("^_", "");
         enumName = enumName.replaceFirst("_$", "");
 
@@ -581,7 +590,7 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
 
     @Override
     public String toEnumName(CodegenProperty property) {
-        String enumName = underscore(toModelName(property.name)).toUpperCase();
+        String enumName = underscore(toModelName(property.name)).toUpperCase(Locale.ROOT);
 
         // remove [] for array or map of enum
         enumName = enumName.replace("[]", "");
@@ -607,6 +616,48 @@ public abstract class AbstractGoCodegen extends DefaultCodegen implements Codege
             return schema.getDefault().toString();
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public void postProcessFile(File file, String fileType) {
+        if (file == null) {
+            return;
+        }
+
+        String goPostProcessFile = System.getenv("GO_POST_PROCESS_FILE");
+        if (StringUtils.isEmpty(goPostProcessFile)) {
+            return; // skip if GO_POST_PROCESS_FILE env variable is not defined
+        }
+
+        // only procees the following type (or we can simply rely on the file extension to check if it's a Go file)
+        Set<String> supportedFileType = new HashSet<String>(
+                Arrays.asList(
+                        "supporting-mustache",
+                        "model-test",
+                        "model",
+                        "api-test",
+                        "api"));
+        if (!supportedFileType.contains(fileType)) {
+            return;
+        }
+
+        // only process files with go extension
+        if ("go".equals(FilenameUtils.getExtension(file.toString()))) {
+            // e.g. "gofmt -w yourcode.go"
+            // e.g. "go fmt path/to/your/package"
+            String command = goPostProcessFile + " " + file.toString();
+            try {
+                Process p = Runtime.getRuntime().exec(command);
+                int exitValue = p.waitFor();
+                if (exitValue != 0) {
+                    LOGGER.error("Error running the command ({}). Exit code: {}", command, exitValue);
+                } else {
+                    LOGGER.info("Successfully executed: " + command);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error running the command ({}). Exception: {}", command, e.getMessage());
+            }
         }
     }
 }

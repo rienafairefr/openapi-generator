@@ -19,16 +19,20 @@ package org.openapitools.codegen.config;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+
 import io.swagger.v3.oas.models.OpenAPI;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.api.TemplatingEngineAdapter;
 import org.openapitools.codegen.auth.AuthParser;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.core.util.Json;
+import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.parser.core.models.AuthorizationValue;
 import io.swagger.v3.parser.core.models.ParseOptions;
 import io.swagger.v3.parser.core.models.SwaggerParseResult;
 import org.apache.commons.lang3.Validate;
+import org.openapitools.codegen.*;
+import org.openapitools.codegen.auth.AuthParser;
 import org.openapitools.codegen.languages.*;
 import org.openapitools.codegen.templating.HandlebarsEngineAdapter;
 import org.openapitools.codegen.templating.MustacheEngineAdapter;
@@ -40,11 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -81,7 +81,9 @@ public class CodegenConfigurator implements Serializable {
     private boolean verbose;
     private boolean skipOverwrite;
     private boolean removeOperationIdPrefix;
+    private boolean logToStderr;
     private boolean validateSpec;
+    private boolean enablePostProcessFile;
     private String templateDir;
     private String templatingEngineName;
     private String auth;
@@ -144,7 +146,7 @@ public class CodegenConfigurator implements Serializable {
     public CodegenConfigurator setGeneratorName(final String generatorName) {
         if (nameMigrationMap.containsKey(generatorName)) {
             String newValue = nameMigrationMap.get(generatorName);
-            LOGGER.warn(String.format("The name '%s' is a deprecated. Please update to the new name of '%s'.", generatorName, newValue));
+            LOGGER.warn(String.format(Locale.ROOT, "The name '%s' is a deprecated. Please update to the new name of '%s'.", generatorName, newValue));
             this.generatorName = newValue;
         } else {
             this.generatorName = generatorName;
@@ -194,6 +196,33 @@ public class CodegenConfigurator implements Serializable {
 
     public CodegenConfigurator setRemoveOperationIdPrefix(boolean removeOperationIdPrefix) {
         this.removeOperationIdPrefix = removeOperationIdPrefix;
+        return this;
+    }
+
+    public boolean getEnablePostProcessFile() {
+        return enablePostProcessFile;
+    }
+
+    public CodegenConfigurator setEnablePostProcessFile(boolean enablePostProcessFile) {
+        this.enablePostProcessFile = enablePostProcessFile;
+        return this;
+    }
+
+    public boolean getLogToStderr() {
+        return logToStderr;
+    }
+
+    public CodegenConfigurator setLogToStderr(boolean logToStderrte) {
+        this.logToStderr = logToStderr;
+        return this;
+    }
+
+    public boolean isGenerateAliasAsModel() {
+        return ModelUtils.isGenerateAliasAsModel();
+    }
+
+    public CodegenConfigurator setGenerateAliasAsModel(boolean generateAliasAsModel) {
+        ModelUtils.setGenerateAliasAsModel(generateAliasAsModel);
         return this;
     }
 
@@ -490,6 +519,7 @@ public class CodegenConfigurator implements Serializable {
         config.setSkipOverwrite(skipOverwrite);
         config.setIgnoreFilePathOverride(ignoreFileOverride);
         config.setRemoveOperationIdPrefix(removeOperationIdPrefix);
+        config.setEnablePostProcessFile(enablePostProcessFile);
 
         config.instantiationTypes().putAll(instantiationTypes);
         config.typeMapping().putAll(typeMappings);
@@ -532,7 +562,6 @@ public class CodegenConfigurator implements Serializable {
         final List<AuthorizationValue> authorizationValues = AuthParser.parse(auth);
         ParseOptions options = new ParseOptions();
         options.setResolve(true);
-        options.setFlatten(true);
         SwaggerParseResult result = new OpenAPIParser().readLocation(inputSpec, authorizationValues, options);
 
         Set<String> validationMessages = new HashSet<>(result.getMessages());
@@ -613,15 +642,15 @@ public class CodegenConfigurator implements Serializable {
                 "\n - [debugOperations] prints operations passed to the template engine" +
                 "\n - [debugSupportingFiles] prints additional data passed to the template engine");
 
-        System.setProperty("debugOpenAPI", "");
-        System.setProperty("debugModels", "");
-        System.setProperty("debugOperations", "");
-        System.setProperty("debugSupportingFiles", "");
+        GeneratorProperties.setProperty("debugOpenAPI", "");
+        GeneratorProperties.setProperty("debugModels", "");
+        GeneratorProperties.setProperty("debugOperations", "");
+        GeneratorProperties.setProperty("debugSupportingFiles", "");
     }
 
     private void setSystemProperties() {
         for (Map.Entry<String, String> entry : systemProperties.entrySet()) {
-            System.setProperty(entry.getKey(), entry.getValue());
+            GeneratorProperties.setProperty(entry.getKey(), entry.getValue());
         }
     }
 

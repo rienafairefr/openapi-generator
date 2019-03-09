@@ -18,11 +18,10 @@
 package org.openapitools.codegen.options;
 
 import com.google.common.collect.ImmutableMap;
-
-import java.util.Map;
-
 import org.openapitools.codegen.CodegenConstants;
 import org.openapitools.codegen.languages.TypeScriptAngularClientCodegen;
+
+import java.util.Map;
 
 public class TypeScriptAngularClientOptionsProvider implements OptionsProvider {
     public static final String SUPPORTS_ES6_VALUE = "false";
@@ -35,6 +34,7 @@ public class TypeScriptAngularClientOptionsProvider implements OptionsProvider {
     public static final String ALLOW_UNICODE_IDENTIFIERS_VALUE = "false";
     public static final String NG_VERSION = "2";
     public static final String PREPEND_FORM_OR_BODY_PARAMETERS_VALUE = "true";
+    public static final String FILE_NAMING_VALUE = "camelCase";
     public static String SERVICE_SUFFIX = "Service";
     public static String SERVICE_FILE_SUFFIX = ".service";
     public static String MODEL_SUFFIX = "";
@@ -66,6 +66,7 @@ public class TypeScriptAngularClientOptionsProvider implements OptionsProvider {
                 .put(TypeScriptAngularClientCodegen.MODEL_FILE_SUFFIX, MODEL_FILE_SUFFIX)
                 .put(CodegenConstants.ALLOW_UNICODE_IDENTIFIERS, ALLOW_UNICODE_IDENTIFIERS_VALUE)
                 .put(CodegenConstants.PREPEND_FORM_OR_BODY_PARAMETERS, PREPEND_FORM_OR_BODY_PARAMETERS_VALUE)
+                .put(TypeScriptAngularClientCodegen.FILE_NAMING, FILE_NAMING_VALUE)
                 .build();
     }
 

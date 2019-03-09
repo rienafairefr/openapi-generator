@@ -14,6 +14,7 @@ namespace {{this}} {
 {{/cppNamespaceDeclarations}}
 
 {{classname}}::{{classname}}(QString json) {
+    this->init();
     this->fromJson(json);
 }
 
@@ -22,13 +23,14 @@ namespace {{this}} {
 }
 
 {{classname}}::~{{classname}}() {
-    
+
 }
 
 void
 {{classname}}::init() {
     {{#vars}}
     m_{{name}}_isSet = false;
+    m_{{name}}_isValid = false;
     {{/vars}}
 }
 
@@ -43,22 +45,26 @@ void
 void
 {{classname}}::fromJsonObject(QJsonObject json) {
     {{#vars}}
-    {{^isContainer}}::{{cppNamespace}}::fromJsonValue({{name}}, json[QString("{{baseName}}")]);{{/isContainer}}
-    {{#isContainer}}{{^items.isContainer}}::{{cppNamespace}}::fromJsonValue({{name}}, json[QString("{{baseName}}")]);{{/items.isContainer}}{{#items.isContainer}}{{#isListContainer}}
+    {{^isContainer}}m_{{name}}_isValid = ::{{cppNamespace}}::fromJsonValue({{name}}, json[QString("{{baseName}}")]);{{/isContainer}}
+    {{#isContainer}}{{^items.isContainer}}m_{{name}}_isValid = ::{{cppNamespace}}::fromJsonValue({{name}}, json[QString("{{baseName}}")]);{{/items.isContainer}}{{#items.isContainer}}{{#isListContainer}}
     if(json["{{baseName}}"].isArray()){
         auto arr = json["{{baseName}}"].toArray();
+        m_{{name}}_isValid = true;
         for (const QJsonValue & jval : arr) {
-            {{items.baseType}} item;
-            {{name}}.push_back(::{{cppNamespace}}::fromJsonValue(item, jval));
+            {{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{#items.isListContainer}}QList<{{items.items.baseType}}>{{/items.isListContainer}}{{#items.isMapContainer}}QMap<QString, {{items.items.baseType}}>{{/items.isMapContainer}} item;
+            m_{{name}}_isValid &=  ::{{cppNamespace}}::fromJsonValue(item, jval)
+            {{name}}.push_back(item);
         }
     }{{/isListContainer}}{{#isMapContainer}}
     if(json["{{baseName}}"].isObject()){
         auto varmap = json["{{baseName}}"].toObject().toVariantMap();
+        m_{{name}}_isValid = true;
         if(varmap.count() > 0){
             for(auto val : varmap.keys()){
-                {{items.baseType}} item;
+                {{^items.isContainer}}{{items.baseType}}{{/items.isContainer}}{{#items.isListContainer}}QList<{{items.items.baseType}}>{{/items.isListContainer}}{{#items.isMapContainer}}QMap<QString, {{items.items.baseType}}>{{/items.isMapContainer}} item;
     		    auto jval = QJsonValue::fromVariant(varmap.value(val));
-                {{name}}.insert({{name}}.end(), val, ::{{cppNamespace}}::fromJsonValue(item, jval));
+                m_{{name}}_isValid &= ::{{cppNamespace}}::fromJsonValue(item, jval);
+                {{name}}.insert({{name}}.end(), val, item);
             }
         }
     }{{/isMapContainer}}{{/items.isContainer}}{{/isContainer}}
@@ -77,7 +83,7 @@ QJsonObject
 {{classname}}::asJsonObject() const {
     QJsonObject obj;
     {{#vars}}
-	{{^isContainer}}{{#complexType}}{{^isString}}{{^isDateTime}}{{^isByteArray}}{{^isDate}}if({{name}}.isSet()){{/isDate}}{{/isByteArray}}{{/isDateTime}}{{/isString}}{{/complexType}}{{^complexType}}if(m_{{name}}_isSet){{/complexType}}{{#isString}}if(m_{{name}}_isSet){{/isString}}{{#isDateTime}}if(m_{{name}}_isSet){{/isDateTime}}{{#isByteArray}}if(m_{{name}}_isSet){{/isByteArray}}{{#isDate}}if(m_{{name}}_isSet){{/isDate}}{
+	{{^isContainer}}{{#complexType}}if({{name}}.isSet()){{/complexType}}{{^complexType}}if(m_{{name}}_isSet){{/complexType}}{
         obj.insert(QString("{{baseName}}"), ::{{cppNamespace}}::toJsonValue({{name}}));
     }{{/isContainer}}{{#isContainer}}
     if({{name}}.size() > 0){
@@ -100,14 +106,19 @@ void
 }
 
 {{/vars}}
-
 bool
 {{classname}}::isSet() const {
     bool isObjectUpdated = false;
     do{ {{#vars}}
-        {{#isContainer}}if({{name}}.size() > 0){{/isContainer}}{{^isContainer}}{{#complexType}}{{^isString}}{{^isDateTime}}{{^isByteArray}}{{^isDate}}if({{name}}.isSet()){{/isDate}}{{/isByteArray}}{{/isDateTime}}{{/isString}}{{/complexType}}{{^complexType}}if(m_{{name}}_isSet){{/complexType}}{{#isString}}if(m_{{name}}_isSet){{/isString}}{{#isDateTime}}if(m_{{name}}_isSet){{/isDateTime}}{{#isByteArray}}if(m_{{name}}_isSet){{/isByteArray}}{{#isDate}}if(m_{{name}}_isSet){{/isDate}}{{/isContainer}}{ isObjectUpdated = true; break;}
+        {{#isContainer}}if({{name}}.size() > 0){{/isContainer}}{{^isContainer}}{{#complexType}}if({{name}}.isSet()){{/complexType}}{{^complexType}}if(m_{{name}}_isSet){{/complexType}}{{/isContainer}}{ isObjectUpdated = true; break;}
     {{/vars}}}while(false);
     return isObjectUpdated;
+}
+
+bool
+{{classname}}::isValid() const {
+    // only required properties are required for the object to be considered valid
+    return {{#vars}}{{#required}}m_{{name}}_isValid && {{/required}}{{/vars}}true;
 }
 
 {{#cppNamespaceDeclarations}}

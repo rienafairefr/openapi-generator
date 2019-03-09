@@ -18,39 +18,27 @@
 package org.openapitools.codegen.languages;
 
 import com.google.common.base.Strings;
-
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.parser.util.SchemaTypeUtil;
-
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenConfig;
-import org.openapitools.codegen.CodegenConstants;
-import org.openapitools.codegen.CodegenModel;
-import org.openapitools.codegen.CodegenOperation;
-import org.openapitools.codegen.CodegenParameter;
-import org.openapitools.codegen.CodegenProperty;
-import org.openapitools.codegen.DefaultCodegen;
+import org.openapitools.codegen.*;
 import org.openapitools.codegen.utils.ModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
+
+import static org.openapitools.codegen.utils.StringUtils.*;
 
 public abstract class AbstractJavaCodegen extends DefaultCodegen implements CodegenConfig {
 
@@ -77,9 +65,9 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     protected String artifactVersion = "1.0.0";
     protected String artifactUrl = "https://github.com/openapitools/openapi-generator";
     protected String artifactDescription = "OpenAPI Java";
-    protected String developerName = "OpenAPI";
+    protected String developerName = "OpenAPI-Generator Contributors";
     protected String developerEmail = "team@openapitools.org";
-    protected String developerOrganization = "OpenAPI";
+    protected String developerOrganization = "OpenAPITools.org";
     protected String developerOrganizationUrl = "http://openapitools.org";
     protected String scmConnection = "scm:git:git@github.com:openapitools/openapi-generator.git";
     protected String scmDeveloperConnection = "scm:git:git@github.com:openapitools/openapi-generator.git";
@@ -97,10 +85,14 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     protected boolean serializeBigDecimalAsString = false;
     protected String apiDocPath = "docs/";
     protected String modelDocPath = "docs/";
-    protected boolean supportJava6= false;
+    protected boolean supportJava6 = false;
     protected boolean disableHtmlEscaping = false;
     protected String booleanGetterPrefix = BOOLEAN_GETTER_PREFIX_DEFAULT;
     protected boolean useNullForUnknownEnumValue = false;
+    protected String parentGroupId = "";
+    protected String parentArtifactId = "";
+    protected String parentVersion = "";
+    protected boolean parentOverridden = false;
 
     public AbstractJavaCodegen() {
         super();
@@ -115,6 +107,8 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
 
         setReservedWordsLowerCase(
                 Arrays.asList(
+                        // special words
+                        "object",
                         // used as internal variables, can collide with parameter names
                         "localVarPath", "localVarQueryParams", "localVarCollectionQueryParams",
                         "localVarHeaderParams", "localVarFormParams", "localVarPostBody",
@@ -167,7 +161,6 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         cliOptions.add(new CliOption(CodegenConstants.LICENSE_NAME, CodegenConstants.LICENSE_NAME_DESC));
         cliOptions.add(new CliOption(CodegenConstants.LICENSE_URL, CodegenConstants.LICENSE_URL_DESC));
         cliOptions.add(new CliOption(CodegenConstants.SOURCE_FOLDER, CodegenConstants.SOURCE_FOLDER_DESC));
-        cliOptions.add(new CliOption(CodegenConstants.LOCAL_VARIABLE_PREFIX, CodegenConstants.LOCAL_VARIABLE_PREFIX_DESC));
         cliOptions.add(CliOption.newBoolean(CodegenConstants.SERIALIZABLE_MODEL, CodegenConstants.SERIALIZABLE_MODEL_DESC));
         cliOptions.add(CliOption.newBoolean(CodegenConstants.SERIALIZE_BIG_DECIMAL_AS_STRING, CodegenConstants
                 .SERIALIZE_BIG_DECIMAL_AS_STRING_DESC));
@@ -194,11 +187,21 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
 
         cliOptions.add(CliOption.newBoolean(DISABLE_HTML_ESCAPING, "Disable HTML escaping of JSON strings when using gson (needed to avoid problems with byte[] fields)"));
         cliOptions.add(CliOption.newString(BOOLEAN_GETTER_PREFIX, "Set booleanGetterPrefix (default value '" + BOOLEAN_GETTER_PREFIX_DEFAULT + "')"));
+
+        cliOptions.add(CliOption.newString(CodegenConstants.PARENT_GROUP_ID, CodegenConstants.PARENT_GROUP_ID_DESC));
+        cliOptions.add(CliOption.newString(CodegenConstants.PARENT_ARTIFACT_ID, CodegenConstants.PARENT_ARTIFACT_ID_DESC));
+        cliOptions.add(CliOption.newString(CodegenConstants.PARENT_VERSION, CodegenConstants.PARENT_VERSION_DESC));
+        cliOptions.add(CliOption.newString(CodegenConstants.SNAPSHOT_VERSION, CodegenConstants.SNAPSHOT_VERSION_DESC));
     }
 
     @Override
     public void processOpts() {
         super.processOpts();
+
+        if (StringUtils.isEmpty(System.getenv("JAVA_POST_PROCESS_FILE"))) {
+            LOGGER.info("Environment variable JAVA_POST_PROCESS_FILE not defined so the Java code may not be properly formatted. To define it, try 'export JAVA_POST_PROCESS_FILE=\"/usr/local/bin/clang-format -i\"' (Linux/Mac)");
+            LOGGER.info("NOTE: To enable file post-processing, 'enablePostProcessFile' must be set to `true` (--enable-post-process-file for CLI).");
+        }
 
         if (additionalProperties.containsKey(SUPPORT_JAVA6)) {
             this.setSupportJava6(Boolean.valueOf(additionalProperties.get(SUPPORT_JAVA6).toString()));
@@ -214,7 +217,6 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
             this.setBooleanGetterPrefix(additionalProperties.get(BOOLEAN_GETTER_PREFIX).toString());
         }
         additionalProperties.put(BOOLEAN_GETTER_PREFIX, booleanGetterPrefix);
-
         if (additionalProperties.containsKey(USE_NULL_FOR_UNKNOWN_ENUM_VALUE)) {
             this.setUseNullForUnknownEnumValue(Boolean.valueOf(additionalProperties.get(USE_NULL_FOR_UNKNOWN_ENUM_VALUE).toString()));
         }
@@ -224,16 +226,16 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
             this.setInvokerPackage((String) additionalProperties.get(CodegenConstants.INVOKER_PACKAGE));
         } else if (additionalProperties.containsKey(CodegenConstants.API_PACKAGE)) {
             // guess from api package
-            String derviedInvokerPackage = deriveInvokerPackageName((String) additionalProperties.get(CodegenConstants.API_PACKAGE));
-            this.additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, derviedInvokerPackage);
+            String derivedInvokerPackage = deriveInvokerPackageName((String) additionalProperties.get(CodegenConstants.API_PACKAGE));
+            this.additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, derivedInvokerPackage);
             this.setInvokerPackage((String) additionalProperties.get(CodegenConstants.INVOKER_PACKAGE));
-            LOGGER.info("Invoker Package Name, originally not set, is now dervied from api package name: " + derviedInvokerPackage);
+            LOGGER.info("Invoker Package Name, originally not set, is now derived from api package name: " + derivedInvokerPackage);
         } else if (additionalProperties.containsKey(CodegenConstants.MODEL_PACKAGE)) {
             // guess from model package
-            String derviedInvokerPackage = deriveInvokerPackageName((String) additionalProperties.get(CodegenConstants.MODEL_PACKAGE));
-            this.additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, derviedInvokerPackage);
+            String derivedInvokerPackage = deriveInvokerPackageName((String) additionalProperties.get(CodegenConstants.MODEL_PACKAGE));
+            this.additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, derivedInvokerPackage);
             this.setInvokerPackage((String) additionalProperties.get(CodegenConstants.INVOKER_PACKAGE));
-            LOGGER.info("Invoker Package Name, originally not set, is now dervied from model package name: " + derviedInvokerPackage);
+            LOGGER.info("Invoker Package Name, originally not set, is now derived from model package name: " + derivedInvokerPackage);
         } else {
             //not set, use default to be passed to template
             additionalProperties.put(CodegenConstants.INVOKER_PACKAGE, invokerPackage);
@@ -263,9 +265,19 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
 
         if (additionalProperties.containsKey(CodegenConstants.ARTIFACT_VERSION)) {
             this.setArtifactVersion((String) additionalProperties.get(CodegenConstants.ARTIFACT_VERSION));
+        } else if (this.getVersionFromSpecification() != null) {
+            this.setArtifactVersion(this.getVersionFromSpecification());
         } else {
             //not set, use to be passed to template
             additionalProperties.put(CodegenConstants.ARTIFACT_VERSION, artifactVersion);
+        }
+
+        if (additionalProperties.containsKey(CodegenConstants.SNAPSHOT_VERSION)) {
+            Boolean useSnapshotVersion = Boolean.valueOf((String) additionalProperties.get(CodegenConstants.SNAPSHOT_VERSION));
+
+            if (useSnapshotVersion) {
+                this.setArtifactVersion(this.buildSnapshotVersion(this.artifactVersion));
+            }
         }
 
         if (additionalProperties.containsKey(CodegenConstants.ARTIFACT_URL)) {
@@ -337,10 +349,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         if (additionalProperties.containsKey(CodegenConstants.SOURCE_FOLDER)) {
             this.setSourceFolder((String) additionalProperties.get(CodegenConstants.SOURCE_FOLDER));
         }
-
-        if (additionalProperties.containsKey(CodegenConstants.LOCAL_VARIABLE_PREFIX)) {
-            this.setLocalVariablePrefix((String) additionalProperties.get(CodegenConstants.LOCAL_VARIABLE_PREFIX));
-        }
+        additionalProperties.put(CodegenConstants.SOURCE_FOLDER, sourceFolder);
 
         if (additionalProperties.containsKey(CodegenConstants.SERIALIZABLE_MODEL)) {
             this.setSerializableModel(Boolean.valueOf(additionalProperties.get(CodegenConstants.SERIALIZABLE_MODEL).toString()));
@@ -371,6 +380,22 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
             this.setWithXml(Boolean.valueOf(additionalProperties.get(WITH_XML).toString()));
         }
         additionalProperties.put(WITH_XML, withXml);
+
+        if (additionalProperties.containsKey(CodegenConstants.PARENT_GROUP_ID)) {
+            this.setParentGroupId((String) additionalProperties.get(CodegenConstants.PARENT_GROUP_ID));
+        }
+
+        if (additionalProperties.containsKey(CodegenConstants.PARENT_ARTIFACT_ID)) {
+            this.setParentArtifactId((String) additionalProperties.get(CodegenConstants.PARENT_ARTIFACT_ID));
+        }
+
+        if (additionalProperties.containsKey(CodegenConstants.PARENT_VERSION)) {
+            this.setParentVersion((String) additionalProperties.get(CodegenConstants.PARENT_VERSION));
+        }
+
+        if (!StringUtils.isEmpty(parentGroupId) && !StringUtils.isEmpty(parentArtifactId) && !StringUtils.isEmpty(parentVersion)) {
+            additionalProperties.put("parentOverridden", true);
+        }
 
         // make api and model doc path available in mustache template
         additionalProperties.put("apiDocPath", apiDocPath);
@@ -508,27 +533,32 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
 
     @Override
     public String apiFileFolder() {
-        return outputFolder + "/" + sourceFolder + "/" + apiPackage().replace('.', '/');
+        return (outputFolder + File.separator + sourceFolder + File.separator + apiPackage().replace('.', File.separatorChar)).replace('/', File.separatorChar);
     }
 
     @Override
     public String apiTestFileFolder() {
-        return outputFolder + "/" + testFolder + "/" + apiPackage().replace('.', '/');
+        return (outputFolder + File.separator + testFolder + File.separator + apiPackage().replace('.', File.separatorChar)).replace('/', File.separatorChar);
+    }
+
+    @Override
+    public String modelTestFileFolder() {
+        return (outputFolder + File.separator + testFolder + File.separator + modelPackage().replace('.', File.separatorChar)).replace('/', File.separatorChar);
     }
 
     @Override
     public String modelFileFolder() {
-        return outputFolder + "/" + sourceFolder + "/" + modelPackage().replace('.', '/');
+        return (outputFolder + File.separator + sourceFolder + File.separator + modelPackage().replace('.', File.separatorChar)).replace('/', File.separatorChar);
     }
 
     @Override
     public String apiDocFileFolder() {
-        return (outputFolder + "/" + apiDocPath).replace('/', File.separatorChar);
+        return (outputFolder + File.separator + apiDocPath).replace('/', File.separatorChar);
     }
 
     @Override
     public String modelDocFileFolder() {
-        return (outputFolder + "/" + modelDocPath).replace('/', File.separatorChar);
+        return (outputFolder + File.separator + modelDocPath).replace('/', File.separatorChar);
     }
 
     @Override
@@ -544,6 +574,11 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     @Override
     public String toApiTestFilename(String name) {
         return toApiName(name) + "Test";
+    }
+
+    @Override
+    public String toModelTestFilename(String name) {
+        return toModelName(name) + "Test";
     }
 
     @Override
@@ -564,7 +599,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         // sanitize name
         name = sanitizeName(name, "\\W-[\\$]"); // FIXME: a parameter should not be assigned. Also declare the methods parameters as 'final'.
 
-        if (name.toLowerCase().matches("^_*class$")) {
+        if (name.toLowerCase(Locale.ROOT).matches("^_*class$")) {
             return "propertyClass";
         }
 
@@ -578,15 +613,15 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         }
 
         if (startsWithTwoUppercaseLetters(name)) {
-            name = name.substring(0, 2).toLowerCase() + name.substring(2);
+            name = name.substring(0, 2).toLowerCase(Locale.ROOT) + name.substring(2);
         }
 
         // If name contains special chars -> replace them.
-        if ((((CharSequence) name).chars().anyMatch(character -> specialCharReplacements.keySet().contains( "" + ((char) character))))) {
+        if ((((CharSequence) name).chars().anyMatch(character -> specialCharReplacements.keySet().contains("" + ((char) character))))) {
             List<String> allowedCharacters = new ArrayList<>();
             allowedCharacters.add("_");
             allowedCharacters.add("$");
-            name = escapeSpecialCharacters(name, allowedCharacters, "_");
+            name = escape(name, specialCharReplacements, allowedCharacters, "_");
         }
 
         // camelize (lower first character) the variable name
@@ -604,7 +639,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     private boolean startsWithTwoUppercaseLetters(String name) {
         boolean startsWithTwoUppercaseLetters = false;
         if (name.length() > 1) {
-            startsWithTwoUppercaseLetters = name.substring(0, 2).equals(name.substring(0, 2).toUpperCase());
+            startsWithTwoUppercaseLetters = name.substring(0, 2).equals(name.substring(0, 2).toUpperCase(Locale.ROOT));
         }
         return startsWithTwoUppercaseLetters;
     }
@@ -679,7 +714,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
             }
             return getSchemaType(p) + "<" + getTypeDeclaration(inner) + ">";
         } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
+            Schema inner = ModelUtils.getAdditionalProperties(p);
             if (inner == null) {
                 LOGGER.warn(p.getName() + "(map property) does not have a proper inner type defined. Default to string");
                 inner = new StringSchema().description("TODO default missing array inner type to string");
@@ -699,6 +734,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
 
     @Override
     public String toDefaultValue(Schema p) {
+        p = ModelUtils.getReferencedSchema(this.openAPI, p);
         if (ModelUtils.isArraySchema(p)) {
             final ArraySchema ap = (ArraySchema) p;
             final String pattern;
@@ -720,7 +756,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
                 }
             }
 
-            return String.format(pattern, typeDeclaration);
+            return String.format(Locale.ROOT, pattern, typeDeclaration);
         } else if (ModelUtils.isMapSchema(p)) {
             final String pattern;
             if (fullJavaUtil) {
@@ -728,11 +764,11 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
             } else {
                 pattern = "new HashMap<%s>()";
             }
-            if (p.getAdditionalProperties() == null) {
+            if (ModelUtils.getAdditionalProperties(p) == null) {
                 return null;
             }
 
-            String typeDeclaration = String.format("String, %s", getTypeDeclaration((Schema) p.getAdditionalProperties()));
+            String typeDeclaration = String.format(Locale.ROOT, "String, %s", getTypeDeclaration(ModelUtils.getAdditionalProperties(p)));
             Object java8obj = additionalProperties.get("java8");
             if (java8obj != null) {
                 Boolean java8 = Boolean.valueOf(java8obj.toString());
@@ -741,7 +777,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
                 }
             }
 
-            return String.format(pattern, typeDeclaration);
+            return String.format(Locale.ROOT, pattern, typeDeclaration);
         } else if (ModelUtils.isIntegerSchema(p)) {
             if (p.getDefault() != null) {
                 if (SchemaTypeUtil.INTEGER64_FORMAT.equals(p.getFormat())) {
@@ -750,7 +786,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
                     return p.getDefault().toString();
                 }
             }
-            return "null";
+            return null;
         } else if (ModelUtils.isNumberSchema(p)) {
             if (p.getDefault() != null) {
                 if (SchemaTypeUtil.FLOAT_FORMAT.equals(p.getFormat())) {
@@ -759,12 +795,12 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
                     return p.getDefault().toString() + "d";
                 }
             }
-            return "null";
+            return null;
         } else if (ModelUtils.isBooleanSchema(p)) {
             if (p.getDefault() != null) {
                 return p.getDefault().toString();
             }
-            return "null";
+            return null;
         } else if (ModelUtils.isStringSchema(p)) {
             if (p.getDefault() != null) {
                 String _default = (String) p.getDefault();
@@ -775,7 +811,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
                     return _default;
                 }
             }
-            return "null";
+            return null;
         }
         return super.toDefaultValue(p);
     }
@@ -836,7 +872,18 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         if (example == null) {
             example = "null";
         } else if (Boolean.TRUE.equals(p.isListContainer)) {
-            example = "Arrays.asList(" + example + ")";
+
+            if (p.items.defaultValue != null) {
+                String innerExample;
+                if ("String".equals(p.items.dataType)) {
+                    innerExample = "\"" + p.items.defaultValue + "\"";
+                } else {
+                    innerExample = p.items.defaultValue;
+                }
+                example = "Arrays.asList(" + innerExample + ")";
+            } else {
+                example = "Arrays.asList()";
+            }
         } else if (Boolean.TRUE.equals(p.isMapContainer)) {
             example = "new HashMap()";
         }
@@ -849,7 +896,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         if (p.getExample() != null) {
             return escapeText(p.getExample().toString());
         } else {
-            return super.toExampleValue(p);
+            return null;
         }
     }
 
@@ -894,8 +941,9 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     }
 
     @Override
-    public CodegenModel fromModel(String name, Schema model, Map<String, Schema> allDefinitions) {
-        CodegenModel codegenModel = super.fromModel(name, model, allDefinitions);
+    public CodegenModel fromModel(String name, Schema model) {
+        Map<String, Schema> allDefinitions = ModelUtils.getSchemas(this.openAPI);
+        CodegenModel codegenModel = super.fromModel(name, model);
         if (codegenModel.description != null) {
             codegenModel.imports.add("ApiModel");
         }
@@ -905,7 +953,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         }
         if (allDefinitions != null && codegenModel.parentSchema != null && codegenModel.hasEnums) {
             final Schema parentModel = allDefinitions.get(codegenModel.parentSchema);
-            final CodegenModel parentCodegenModel = super.fromModel(codegenModel.parent, parentModel, allDefinitions);
+            final CodegenModel parentCodegenModel = super.fromModel(codegenModel.parent, parentModel);
             codegenModel = AbstractJavaCodegen.reconcileInlineEnums(codegenModel, parentCodegenModel);
         }
         return codegenModel;
@@ -991,6 +1039,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
                 continue;
             }
             for (Operation operation : path.readOperations()) {
+                LOGGER.info("Processing operation " + operation.getOperationId());
                 if (hasBodyParameter(openAPI, operation) || hasFormParameter(openAPI, operation)) {
                     String defaultContentType = hasFormParameter(openAPI, operation) ? "application/x-www-form-urlencoded" : "application/json";
                     List<String> consumes = new ArrayList<String>(getConsumesInfo(openAPI, operation));
@@ -1007,8 +1056,9 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     protected static String getAccept(OpenAPI openAPI, Operation operation) {
         String accepts = null;
         String defaultContentType = "application/json";
-        ArrayList<String> produces = new ArrayList<String>(getProducesInfo(openAPI, operation));
-        if (produces != null && !produces.isEmpty()) {
+        Set<String> producesInfo = getProducesInfo(openAPI, operation);
+        if (producesInfo != null && !producesInfo.isEmpty()) {
+            ArrayList<String> produces = new ArrayList<String>(producesInfo);
             StringBuilder sb = new StringBuilder();
             for (String produce : produces) {
                 if (defaultContentType.equalsIgnoreCase(produce)) {
@@ -1049,7 +1099,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
 
         // for symbol, e.g. $, #
         if (getSymbolName(value) != null) {
-            return getSymbolName(value).toUpperCase();
+            return getSymbolName(value).toUpperCase(Locale.ROOT);
         }
 
         // number
@@ -1063,7 +1113,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         }
 
         // string
-        String var = value.replaceAll("\\W+", "_").toUpperCase();
+        String var = value.replaceAll("\\W+", "_").toUpperCase(Locale.ROOT);
         if (var.matches("\\d.*")) {
             return "_" + var;
         } else {
@@ -1087,8 +1137,8 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
     }
 
     @Override
-    public CodegenOperation fromOperation(String path, String httpMethod, Operation operation, Map<String, Schema> definitions, OpenAPI openAPI) {
-        CodegenOperation op = super.fromOperation(path, httpMethod, operation, definitions, openAPI);
+    public CodegenOperation fromOperation(String path, String httpMethod, Operation operation, List<Server> servers) {
+        CodegenOperation op = super.fromOperation(path, httpMethod, operation, servers);
         op.path = sanitizePath(op.path);
         return op;
     }
@@ -1301,14 +1351,39 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         return sb.toString();
     }
 
+    /**
+     * Gets version from API specification.
+     *
+     * @return API version
+     */
+    private String getVersionFromSpecification() {
+        if (this.openAPI != null && this.openAPI.getInfo() != null) {
+            return this.openAPI.getInfo().getVersion();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Builds a SNAPSHOT version from a given version.
+     *
+     * @param version
+     * @return SNAPSHOT version
+     */
+    private String buildSnapshotVersion(String version) {
+        return version + "-" + "SNAPSHOT";
+    }
+
     public void setSupportJava6(boolean value) {
         this.supportJava6 = value;
     }
 
+    @Override
     public String toRegularExpression(String pattern) {
         return escapeText(pattern);
     }
 
+    @Override
     public boolean convertPropertyToBoolean(String propertyKey) {
         boolean booleanValue = false;
         if (additionalProperties.containsKey(propertyKey)) {
@@ -1318,6 +1393,7 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         return booleanValue;
     }
 
+    @Override
     public void writePropertyBack(String propertyKey, boolean value) {
         additionalProperties.put(propertyKey, value);
     }
@@ -1343,4 +1419,83 @@ public abstract class AbstractJavaCodegen extends DefaultCodegen implements Code
         return tag;
     }
 
+    /**
+     * Camelize the method name of the getter and setter
+     *
+     * @param name string to be camelized
+     * @return Camelized string
+     */
+    @Override
+    public String getterAndSetterCapitalize(String name) {
+        boolean lowercaseFirstLetter = false;
+        if (name == null || name.length() == 0) {
+            return name;
+        }
+        name = toVarName(name);
+        //
+        // Let the property name capitalized
+        // except when the first letter of the property name is lowercase and the second letter is uppercase
+        // Refer to section 8.8: Capitalization of inferred names of the JavaBeans API specification
+        // http://download.oracle.com/otn-pub/jcp/7224-javabeans-1.01-fr-spec-oth-JSpec/beans.101.pdf)
+        //
+        if (name.length() > 1 && Character.isLowerCase(name.charAt(0)) && Character.isUpperCase(name.charAt(1))) {
+            lowercaseFirstLetter = true;
+        }
+        return camelize(name, lowercaseFirstLetter);
+    }
+
+
+    @Override
+    public void postProcessFile(File file, String fileType) {
+        if (file == null) {
+            return;
+        }
+
+        String javaPostProcessFile = System.getenv("JAVA_POST_PROCESS_FILE");
+        if (StringUtils.isEmpty(javaPostProcessFile)) {
+            return; // skip if JAVA_POST_PROCESS_FILE env variable is not defined
+        }
+
+        // only process files with java extension
+        if ("java".equals(FilenameUtils.getExtension(file.toString()))) {
+            String command = javaPostProcessFile + " " + file.toString();
+            try {
+                Process p = Runtime.getRuntime().exec(command);
+                p.waitFor();
+                int exitValue = p.exitValue();
+                if (exitValue != 0) {
+                    LOGGER.error("Error running the command ({}). Exit value: {}", command, exitValue);
+                } else {
+                    LOGGER.info("Successfully executed: " + command);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error running the command ({}). Exception: {}", command, e.getMessage());
+            }
+        }
+    }
+
+    public void setParentGroupId(final String parentGroupId) {
+        this.parentGroupId = parentGroupId;
+    }
+
+    public void setParentArtifactId(final String parentArtifactId) {
+        this.parentArtifactId = parentArtifactId;
+    }
+
+    public void setParentVersion(final String parentVersion) {
+        this.parentVersion = parentVersion;
+    }
+
+    public void setParentOverridden(final boolean parentOverridden) {
+        this.parentOverridden = parentOverridden;
+    }
+
+    @Override
+    protected void addAdditionPropertiesToCodeGenModel(CodegenModel codegenModel, Schema schema) {
+        super.addAdditionPropertiesToCodeGenModel(codegenModel, schema);
+
+        // See https://github.com/OpenAPITools/openapi-generator/pull/1729#issuecomment-449937728
+        codegenModel.additionalPropertiesType = getSchemaType(ModelUtils.getAdditionalProperties(schema));
+        addImport(codegenModel, codegenModel.additionalPropertiesType);
+    }
 }

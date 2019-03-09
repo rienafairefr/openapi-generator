@@ -44,10 +44,10 @@ public class PetApi  {
     }, tags={ "pet", })
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 405, message = "Invalid input", response = Void.class) })
-    public Response addPet(@ApiParam(value = "Pet object that needs to be added to the store" ,required=true) Pet pet
+    public Response addPet(@ApiParam(value = "Pet object that needs to be added to the store" ,required=true) Pet body
 )
     throws NotFoundException {
-        return delegate.addPet(pet);
+        return delegate.addPet(body);
     }
     @DELETE
     @Path("/{petId}")
@@ -81,7 +81,7 @@ public class PetApi  {
         @io.swagger.annotations.ApiResponse(code = 200, message = "successful operation", response = Pet.class, responseContainer = "List"),
         
         @io.swagger.annotations.ApiResponse(code = 400, message = "Invalid status value", response = Pet.class, responseContainer = "List") })
-    public Response findPetsByStatus(@ApiParam(value = "Status values that need to be considered for filter",required=true, allowableValues="available, pending, sold") @QueryParam("status") List<String> status
+    public Response findPetsByStatus(@ApiParam(value = "Status values that need to be considered for filter",required=true, allowableValues="available, pending, sold", defaultValue="new ArrayList<String>()") @DefaultValue("new ArrayList<String>()") @QueryParam("status") List<String> status
 )
     throws NotFoundException {
         return delegate.findPetsByStatus(status);
@@ -100,7 +100,7 @@ public class PetApi  {
         @io.swagger.annotations.ApiResponse(code = 200, message = "successful operation", response = Pet.class, responseContainer = "List"),
         
         @io.swagger.annotations.ApiResponse(code = 400, message = "Invalid tag value", response = Pet.class, responseContainer = "List") })
-    public Response findPetsByTags(@ApiParam(value = "Tags to filter by",required=true) @QueryParam("tags") List<String> tags
+    public Response findPetsByTags(@ApiParam(value = "Tags to filter by",required=true, defaultValue="new ArrayList<String>()") @DefaultValue("new ArrayList<String>()") @QueryParam("tags") List<String> tags
 )
     throws NotFoundException {
         return delegate.findPetsByTags(tags);
@@ -139,10 +139,10 @@ public class PetApi  {
         @io.swagger.annotations.ApiResponse(code = 404, message = "Pet not found", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 405, message = "Validation exception", response = Void.class) })
-    public Response updatePet(@ApiParam(value = "Pet object that needs to be added to the store" ,required=true) Pet pet
+    public Response updatePet(@ApiParam(value = "Pet object that needs to be added to the store" ,required=true) Pet body
 )
     throws NotFoundException {
-        return delegate.updatePet(pet);
+        return delegate.updatePet(body);
     }
     @POST
     @Path("/{petId}")

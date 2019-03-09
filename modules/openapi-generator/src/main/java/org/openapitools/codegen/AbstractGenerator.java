@@ -17,80 +17,36 @@
 
 package org.openapitools.codegen;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.Scanner;
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.api.TemplatingGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
+import java.nio.file.Paths;
+import java.util.Scanner;
+import java.util.regex.Pattern;
+
 public abstract class AbstractGenerator implements TemplatingGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGenerator.class);
 
+    public boolean embeddedTemplateExists(String name) {
+        return this.getClass().getClassLoader().getResource(getCPResourcePath(name)) != null;
+    }
+
     @SuppressWarnings("static-method")
-    public File writeToFile(String filename, String contents) throws IOException {
-        LOGGER.info("writing file " + filename);
-        File output = new File(filename);
-
-        if (output.getParent() != null && !new File(output.getParent()).exists()) {
-            File parent = new File(output.getParent());
-            parent.mkdirs();
+    public String getCPResourcePath(String name) {
+        if (!"/".equals(File.separator)) {
+            return name.replaceAll(Pattern.quote(File.separator), "/");
         }
-        Writer out = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(output), "UTF-8"));
-
-        out.write(contents);
-        out.close();
-        return output;
-    }
-
-    public String readTemplate(String name) {
-        try {
-            Reader reader = getTemplateReader(name);
-            if (reader == null) {
-                throw new RuntimeException("no file found");
-            }
-            Scanner s = new Scanner(reader).useDelimiter("\\A");
-            return s.hasNext() ? s.next() : "";
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-        }
-        throw new RuntimeException("can't load template " + name);
-    }
-
-    public Reader getTemplateReader(String name) {
-        try {
-            InputStream is = this.getClass().getClassLoader().getResourceAsStream(getCPResourcePath(name));
-            if (is == null) {
-                is = new FileInputStream(new File(name)); // May throw but never return a null value
-            }
-            return new InputStreamReader(is, "UTF-8");
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-        }
-        throw new RuntimeException("can't load template " + name);
-    }
-
-    private String buildLibraryFilePath(String dir, String library, String file) {
-        return dir + File.separator + "libraries" + File.separator + library + File.separator + file;
+        return name;
     }
 
     /**
      * Get the template file path with template dir prepended, and use the
      * library template if exists.
      *
-     * @param config Codegen config
+     * @param config       Codegen config
      * @param templateFile Template file
      * @return String Full template file path
      */
@@ -124,9 +80,22 @@ public abstract class AbstractGenerator implements TemplatingGenerator {
                 return embeddedLibTemplateFile;
             }
         }
-            
+
         // Fall back to the template file embedded/packaged in the JAR file...
         return config.embeddedTemplateDir() + File.separator + templateFile;
+    }
+
+    public Reader getTemplateReader(String name) {
+        try {
+            InputStream is = this.getClass().getClassLoader().getResourceAsStream(getCPResourcePath(name));
+            if (is == null) {
+                is = new FileInputStream(new File(name)); // May throw but never return a null value
+            }
+            return new InputStreamReader(is, "UTF-8");
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+        throw new RuntimeException("can't load template " + name);
     }
 
     public String readResourceContents(String resourceFilePath) {
@@ -139,15 +108,40 @@ public abstract class AbstractGenerator implements TemplatingGenerator {
         return sb.toString();
     }
 
-    public boolean embeddedTemplateExists(String name) {
-        return this.getClass().getClassLoader().getResource(getCPResourcePath(name)) != null;
+    public String readTemplate(String name) {
+        try {
+            Reader reader = getTemplateReader(name);
+            if (reader == null) {
+                throw new RuntimeException("no file found");
+            }
+            Scanner s = new Scanner(reader).useDelimiter("\\A");
+            return s.hasNext() ? s.next() : "";
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
+        throw new RuntimeException("can't load template " + name);
     }
 
     @SuppressWarnings("static-method")
-    public String getCPResourcePath(String name) {
-        if (!"/".equals(File.separator)) {
-            return name.replaceAll(Pattern.quote(File.separator), "/");
+    public File writeToFile(String filename, String contents) throws IOException {
+        LOGGER.info("writing file " + filename);
+
+        // Use Paths.get here to normalize path (for Windows file separator, space escaping on Linux/Mac, etc)
+        File output = Paths.get(filename).toFile();
+
+        if (output.getParent() != null && !new File(output.getParent()).exists()) {
+            File parent = new File(output.getParent());
+            parent.mkdirs();
         }
-        return name;
+
+        try (Writer out = new BufferedWriter(new OutputStreamWriter(
+                new FileOutputStream(output), "UTF-8"))) {
+            out.write(contents);
+        }
+        return output;
+    }
+
+    private String buildLibraryFilePath(String dir, String library, String file) {
+        return dir + File.separator + "libraries" + File.separator + library + File.separator + file;
     }
 }

@@ -69,7 +69,7 @@ public class StoreApi  {
         @io.swagger.annotations.ApiResponse(code = 400, message = "Invalid ID supplied", response = Order.class),
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Order not found", response = Order.class) })
-    public Response getOrderById(@ApiParam(value = "ID of pet that needs to be fetched",required=true, allowableValues="range=[1, 5]") @PathParam("order_id") Long orderId
+    public Response getOrderById(@ApiParam(value = "ID of pet that needs to be fetched",required=true) @PathParam("order_id") Long orderId
 )
     throws NotFoundException {
         return delegate.getOrderById(orderId);
@@ -83,9 +83,9 @@ public class StoreApi  {
         @io.swagger.annotations.ApiResponse(code = 200, message = "successful operation", response = Order.class),
         
         @io.swagger.annotations.ApiResponse(code = 400, message = "Invalid Order", response = Order.class) })
-    public Response placeOrder(@ApiParam(value = "order placed for purchasing the pet" ,required=true) Order order
+    public Response placeOrder(@ApiParam(value = "order placed for purchasing the pet" ,required=true) Order body
 )
     throws NotFoundException {
-        return delegate.placeOrder(order);
+        return delegate.placeOrder(body);
     }
 }

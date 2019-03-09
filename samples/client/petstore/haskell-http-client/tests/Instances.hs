@@ -101,11 +101,6 @@ instance Arbitrary Animal where
       <$> arbitrary -- animalClassName :: Text
       <*> arbitrary -- animalColor :: Maybe Text
     
-instance Arbitrary AnimalFarm where
-  arbitrary =
-    
-    pure AnimalFarm
-     
 instance Arbitrary ApiResponse where
   arbitrary =
     ApiResponse
@@ -151,7 +146,7 @@ instance Arbitrary Category where
   arbitrary =
     Category
       <$> arbitrary -- categoryId :: Maybe Integer
-      <*> arbitrary -- categoryName :: Maybe Text
+      <*> arbitrary -- categoryName :: Text
     
 instance Arbitrary ClassModel where
   arbitrary =
@@ -225,7 +220,7 @@ instance Arbitrary MapTest where
       <$> arbitrary -- mapTestMapMapOfString :: Maybe (Map.Map String (Map.Map String Text))
       <*> arbitrary -- mapTestMapOfEnumString :: Maybe (Map.Map String Text)
       <*> arbitrary -- mapTestDirectMap :: Maybe (Map.Map String Bool)
-      <*> arbitrary -- mapTestIndirectMap :: Maybe StringBooleanMap
+      <*> arbitrary -- mapTestIndirectMap :: Maybe (Map.Map String Bool)
     
 instance Arbitrary MixedPropertiesAndAdditionalPropertiesClass where
   arbitrary =
@@ -301,16 +296,29 @@ instance Arbitrary SpecialModelName where
     SpecialModelName
       <$> arbitrary -- specialModelNameSpecialPropertyName :: Maybe Integer
     
-instance Arbitrary StringBooleanMap where
-  arbitrary =
-    
-    pure StringBooleanMap
-     
 instance Arbitrary Tag where
   arbitrary =
     Tag
       <$> arbitrary -- tagId :: Maybe Integer
       <*> arbitrary -- tagName :: Maybe Text
+    
+instance Arbitrary TypeHolderDefault where
+  arbitrary =
+    TypeHolderDefault
+      <$> arbitrary -- typeHolderDefaultStringItem :: Text
+      <*> arbitrary -- typeHolderDefaultNumberItem :: Double
+      <*> arbitrary -- typeHolderDefaultIntegerItem :: Int
+      <*> arbitrary -- typeHolderDefaultBoolItem :: Bool
+      <*> arbitrary -- typeHolderDefaultArrayItem :: [Int]
+    
+instance Arbitrary TypeHolderExample where
+  arbitrary =
+    TypeHolderExample
+      <$> arbitrary -- typeHolderExampleStringItem :: Text
+      <*> arbitrary -- typeHolderExampleNumberItem :: Double
+      <*> arbitrary -- typeHolderExampleIntegerItem :: Int
+      <*> arbitrary -- typeHolderExampleBoolItem :: Bool
+      <*> arbitrary -- typeHolderExampleArrayItem :: [Int]
     
 instance Arbitrary User where
   arbitrary =
@@ -323,6 +331,39 @@ instance Arbitrary User where
       <*> arbitrary -- userPassword :: Maybe Text
       <*> arbitrary -- userPhone :: Maybe Text
       <*> arbitrary -- userUserStatus :: Maybe Int
+    
+instance Arbitrary XmlItem where
+  arbitrary =
+    XmlItem
+      <$> arbitrary -- xmlItemAttributeString :: Maybe Text
+      <*> arbitrary -- xmlItemAttributeNumber :: Maybe Double
+      <*> arbitrary -- xmlItemAttributeInteger :: Maybe Int
+      <*> arbitrary -- xmlItemAttributeBoolean :: Maybe Bool
+      <*> arbitrary -- xmlItemWrappedArray :: Maybe [Int]
+      <*> arbitrary -- xmlItemNameString :: Maybe Text
+      <*> arbitrary -- xmlItemNameNumber :: Maybe Double
+      <*> arbitrary -- xmlItemNameInteger :: Maybe Int
+      <*> arbitrary -- xmlItemNameBoolean :: Maybe Bool
+      <*> arbitrary -- xmlItemNameArray :: Maybe [Int]
+      <*> arbitrary -- xmlItemNameWrappedArray :: Maybe [Int]
+      <*> arbitrary -- xmlItemPrefixString :: Maybe Text
+      <*> arbitrary -- xmlItemPrefixNumber :: Maybe Double
+      <*> arbitrary -- xmlItemPrefixInteger :: Maybe Int
+      <*> arbitrary -- xmlItemPrefixBoolean :: Maybe Bool
+      <*> arbitrary -- xmlItemPrefixArray :: Maybe [Int]
+      <*> arbitrary -- xmlItemPrefixWrappedArray :: Maybe [Int]
+      <*> arbitrary -- xmlItemNamespaceString :: Maybe Text
+      <*> arbitrary -- xmlItemNamespaceNumber :: Maybe Double
+      <*> arbitrary -- xmlItemNamespaceInteger :: Maybe Int
+      <*> arbitrary -- xmlItemNamespaceBoolean :: Maybe Bool
+      <*> arbitrary -- xmlItemNamespaceArray :: Maybe [Int]
+      <*> arbitrary -- xmlItemNamespaceWrappedArray :: Maybe [Int]
+      <*> arbitrary -- xmlItemPrefixNsString :: Maybe Text
+      <*> arbitrary -- xmlItemPrefixNsNumber :: Maybe Double
+      <*> arbitrary -- xmlItemPrefixNsInteger :: Maybe Int
+      <*> arbitrary -- xmlItemPrefixNsBoolean :: Maybe Bool
+      <*> arbitrary -- xmlItemPrefixNsArray :: Maybe [Int]
+      <*> arbitrary -- xmlItemPrefixNsWrappedArray :: Maybe [Int]
     
 
 

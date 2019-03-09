@@ -17,10 +17,10 @@
 
 package org.openapitools.codegen.languages;
 
-import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.servers.Server;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
@@ -33,6 +33,9 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 /**
  * Swift (2.x) generator is no longer actively maintained. Please use
@@ -79,7 +82,7 @@ public class SwiftClientCodegen extends DefaultCodegen implements CodegenConfig 
 
     @Override
     public String getHelp() {
-        return "Generates a Swift (2.x) client library. IMPORTANT NOTE: this generator (swfit 2.x)  is no longer actively maintained so please use 'swift3' or 'swift4' generator instead.";
+        return "Generates a Swift (2.x) client library. IMPORTANT NOTE: this generator (swfit 2.x)  is no longer actively maintained so please use 'swift4' generator instead.";
     }
 
     public SwiftClientCodegen() {
@@ -270,7 +273,7 @@ public class SwiftClientCodegen extends DefaultCodegen implements CodegenConfig 
             Schema inner = ap.getItems();
             return "[" + getTypeDeclaration(inner) + "]";
         } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
+            Schema inner = ModelUtils.getAdditionalProperties(p);
             return "[String:" + getTypeDeclaration(inner) + "]";
         }
         return super.getTypeDeclaration(p);
@@ -359,7 +362,7 @@ public class SwiftClientCodegen extends DefaultCodegen implements CodegenConfig 
     @Override
     public String toInstantiationType(Schema p) {
         if (ModelUtils.isMapSchema(p)) {
-            String inner = getSchemaType((Schema) p.getAdditionalProperties());
+            String inner = getSchemaType(ModelUtils.getAdditionalProperties(p));
             return "[String:" + inner + "]";
         } else if (ModelUtils.isArraySchema(p)) {
             ArraySchema ap = (ArraySchema) p;
@@ -450,6 +453,12 @@ public class SwiftClientCodegen extends DefaultCodegen implements CodegenConfig 
             return newOperationId;
         }
 
+        // operationId starts with a number
+        if (operationId.matches("^\\d.*")) {
+            LOGGER.warn(operationId + " (starting with a number) cannot be used as method name. Renamed to " + camelize(sanitizeName("call_" + operationId), true));
+            operationId = camelize(sanitizeName("call_" + operationId), true);
+        }
+
         return operationId;
     }
 
@@ -501,10 +510,10 @@ public class SwiftClientCodegen extends DefaultCodegen implements CodegenConfig 
     }
 
     @Override
-    public CodegenOperation fromOperation(String path, String httpMethod, Operation operation, Map<String, Schema> definitions, OpenAPI openAPI) {
+    public CodegenOperation fromOperation(String path, String httpMethod, Operation operation, List<Server> servers) {
         path = normalizePath(path); // FIXME: a parameter should not be assigned. Also declare the methods parameters as 'final'.
         // issue 3914 - removed logic designed to remove any parameter of type HeaderParameter
-        return super.fromOperation(path, httpMethod, operation, definitions, openAPI);
+        return super.fromOperation(path, httpMethod, operation, servers);
     }
 
     private static String normalizePath(String path) {
@@ -577,7 +586,7 @@ public class SwiftClientCodegen extends DefaultCodegen implements CodegenConfig 
         }
 
         // string
-        String enumName = sanitizeName(underscore(name).toUpperCase());
+        String enumName = sanitizeName(underscore(name).toUpperCase(Locale.ROOT));
         enumName = enumName.replaceFirst("^_", "");
         enumName = enumName.replaceFirst("_$", "");
 

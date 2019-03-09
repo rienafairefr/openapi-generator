@@ -46,6 +46,12 @@ $router->post('/v2/fake', 'FakeApi@testEndpointParameters');
  */
 $router->get('/v2/fake', 'FakeApi@testEnumParameters');
 /**
+ * delete testGroupParameters
+ * Summary: Fake endpoint to test group parameters (optional)
+ * Notes: Fake endpoint to test group parameters (optional)
+ */
+$router->delete('/v2/fake', 'FakeApi@testGroupParameters');
+/**
  * put testBodyWithFileSchema
  * Summary: 
  * Notes: For this test, the body for this request much reference a schema named &#x60;File&#x60;.
@@ -57,6 +63,12 @@ $router->put('/v2/fake/body-with-file-schema', 'FakeApi@testBodyWithFileSchema')
  * Notes: 
  */
 $router->put('/v2/fake/body-with-query-params', 'FakeApi@testBodyWithQueryParams');
+/**
+ * post createXmlItem
+ * Summary: creates an XmlItem
+ * Notes: this route creates an XmlItem
+ */
+$router->post('/v2/fake/create_xml_item', 'FakeApi@createXmlItem');
 /**
  * post testInlineAdditionalProperties
  * Summary: test inline additionalProperties

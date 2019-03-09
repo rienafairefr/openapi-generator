@@ -25,6 +25,7 @@
  */
 namespace OpenAPIServer\Api;
 
+use PHPUnit\Framework\TestCase;
 use OpenAPIServer\Api\FakeApi;
 
 /**
@@ -35,36 +36,37 @@ use OpenAPIServer\Api\FakeApi;
  * @package  OpenAPIServer\Api
  * @author   OpenAPI Generator team
  * @link     https://github.com/openapitools/openapi-generator
- * @coversDefaultClass \OpenAPIServer\Model\FakeApi
+ * @coversDefaultClass \OpenAPIServer\Api\FakeApi
  */
-class FakeApiTest extends \PHPUnit_Framework_TestCase {
+class FakeApiTest extends TestCase
+{
 
     /**
      * Setup before running any test cases
      */
-    public static function setUpBeforeClass() {
-
+    public static function setUpBeforeClass()
+    {
     }
 
     /**
      * Setup before running each test case
      */
-    public function setUp() {
-
+    public function setUp()
+    {
     }
 
     /**
      * Clean up after running each test case
      */
-    public function tearDown() {
-
+    public function tearDown()
+    {
     }
 
     /**
      * Clean up after running all test cases
      */
-    public static function tearDownAfterClass() {
-
+    public static function tearDownAfterClass()
+    {
     }
 
     /**
@@ -73,7 +75,7 @@ class FakeApiTest extends \PHPUnit_Framework_TestCase {
      * To test code injection *_/ ' \" =end -- \\r\\n \\n \\r.
      * @covers ::testCodeInjectEndRnNR
      */
-    public function testTestCodeInjectEndRnNR() {
-
+    public function testTestCodeInjectEndRnNR()
+    {
     }
 }

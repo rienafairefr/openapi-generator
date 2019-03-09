@@ -25,7 +25,7 @@ OAIUserApiRequest::OAIUserApiRequest(QHttpEngine::Socket *s, OAIUserApiHandler* 
     auto headers = s->headers();
     for(auto itr = headers.begin(); itr != headers.end(); itr++) {
         requestHeaders.insert(QString(itr.key()), QString(itr.value()));
-    }     
+    }
 }
 
 OAIUserApiRequest::~OAIUserApiRequest(){
@@ -33,7 +33,7 @@ OAIUserApiRequest::~OAIUserApiRequest(){
     qDebug() << "OAIUserApiRequest::~OAIUserApiRequest()";
 }
 
-QMap<QString, QString> 
+QMap<QString, QString>
 OAIUserApiRequest::getRequestHeaders() const {
     return requestHeaders;
 }
@@ -53,115 +53,115 @@ QHttpEngine::Socket* OAIUserApiRequest::getRawSocket(){
 void OAIUserApiRequest::createUserRequest(){
     qDebug() << "/v2/user";
     connect(this, &OAIUserApiRequest::createUser, handler, &OAIUserApiHandler::createUser);
-    
+
     
  
     QJsonDocument doc;
     socket->readJson(doc);
     QJsonObject obj = doc.object();
-    OAIUser oai_user;
-    ::OpenAPI::fromJsonValue(oai_user, obj);
+    OAIUser body;
+    ::OpenAPI::fromJsonValue(body, obj);
     
 
-    emit createUser( oai_user);
+    emit createUser(body);
 }
 
 
 void OAIUserApiRequest::createUsersWithArrayInputRequest(){
     qDebug() << "/v2/user/createWithArray";
     connect(this, &OAIUserApiRequest::createUsersWithArrayInput, handler, &OAIUserApiHandler::createUsersWithArrayInput);
-    
+
     
  
     QJsonDocument doc;
-    QList<OAIUser> oai_user;     
+    QList<OAIUser> body;
     if(socket->readJson(doc)){
         QJsonArray jsonArray = doc.array();
         foreach(QJsonValue obj, jsonArray) {
             OAIUser o;
             ::OpenAPI::fromJsonValue(o, obj);
-            oai_user.append(o);
+            body.append(o);
         }
     }
     
 
-    emit createUsersWithArrayInput( oai_user);
+    emit createUsersWithArrayInput(body);
 }
 
 
 void OAIUserApiRequest::createUsersWithListInputRequest(){
     qDebug() << "/v2/user/createWithList";
     connect(this, &OAIUserApiRequest::createUsersWithListInput, handler, &OAIUserApiHandler::createUsersWithListInput);
-    
+
     
  
     QJsonDocument doc;
-    QList<OAIUser> oai_user;     
+    QList<OAIUser> body;
     if(socket->readJson(doc)){
         QJsonArray jsonArray = doc.array();
         foreach(QJsonValue obj, jsonArray) {
             OAIUser o;
             ::OpenAPI::fromJsonValue(o, obj);
-            oai_user.append(o);
+            body.append(o);
         }
     }
     
 
-    emit createUsersWithListInput( oai_user);
+    emit createUsersWithListInput(body);
 }
 
 
 void OAIUserApiRequest::deleteUserRequest(const QString& usernamestr){
     qDebug() << "/v2/user/{username}";
     connect(this, &OAIUserApiRequest::deleteUser, handler, &OAIUserApiHandler::deleteUser);
-    
+
     
     QString username;
     fromStringValue(usernamestr, username);
     
 
-    emit deleteUser( username);
+    emit deleteUser(username);
 }
 
 
 void OAIUserApiRequest::getUserByNameRequest(const QString& usernamestr){
     qDebug() << "/v2/user/{username}";
     connect(this, &OAIUserApiRequest::getUserByName, handler, &OAIUserApiHandler::getUserByName);
-    
+
     
     QString username;
     fromStringValue(usernamestr, username);
     
 
-    emit getUserByName( username);
+    emit getUserByName(username);
 }
 
 
 void OAIUserApiRequest::loginUserRequest(){
     qDebug() << "/v2/user/login";
     connect(this, &OAIUserApiRequest::loginUser, handler, &OAIUserApiHandler::loginUser);
+
     
-    
-    QString username;   
+    QString username;
     if(socket->queryString().keys().contains("username")){
         fromStringValue(socket->queryString().value("username"), username);
     }
     
-    QString password;   
+    QString password;
     if(socket->queryString().keys().contains("password")){
         fromStringValue(socket->queryString().value("password"), password);
     }
     
 
 
-    emit loginUser( username,  password);
+    emit loginUser(username, password);
 }
 
 
 void OAIUserApiRequest::logoutUserRequest(){
     qDebug() << "/v2/user/logout";
     connect(this, &OAIUserApiRequest::logoutUser, handler, &OAIUserApiHandler::logoutUser);
-    
+
     
 
 
@@ -172,7 +172,7 @@ void OAIUserApiRequest::logoutUserRequest(){
 void OAIUserApiRequest::updateUserRequest(const QString& usernamestr){
     qDebug() << "/v2/user/{username}";
     connect(this, &OAIUserApiRequest::updateUser, handler, &OAIUserApiHandler::updateUser);
-    
+
     
     QString username;
     fromStringValue(usernamestr, username);
@@ -180,17 +180,17 @@ void OAIUserApiRequest::updateUserRequest(const QString& usernamestr){
     QJsonDocument doc;
     socket->readJson(doc);
     QJsonObject obj = doc.object();
-    OAIUser oai_user;
-    ::OpenAPI::fromJsonValue(oai_user, obj);
+    OAIUser body;
+    ::OpenAPI::fromJsonValue(body, obj);
     
 
-    emit updateUser( username,  oai_user);
+    emit updateUser(username, body);
 }
 
-  
+
 
 void OAIUserApiRequest::createUserResponse(){
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::OK);
     if(socket->isOpen()){
         socket->close();
@@ -198,7 +198,7 @@ void OAIUserApiRequest::createUserResponse(){
 }
 
 void OAIUserApiRequest::createUsersWithArrayInputResponse(){
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::OK);
     if(socket->isOpen()){
         socket->close();
@@ -206,7 +206,7 @@ void OAIUserApiRequest::createUsersWithArrayInputResponse(){
 }
 
 void OAIUserApiRequest::createUsersWithListInputResponse(){
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::OK);
     if(socket->isOpen()){
         socket->close();
@@ -214,7 +214,7 @@ void OAIUserApiRequest::createUsersWithListInputResponse(){
 }
 
 void OAIUserApiRequest::deleteUserResponse(){
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::OK);
     if(socket->isOpen()){
         socket->close();
@@ -232,15 +232,14 @@ void OAIUserApiRequest::getUserByNameResponse(const OAIUser& res){
 
 void OAIUserApiRequest::loginUserResponse(const QString& res){
     writeResponseHeaders();
-    QJsonDocument resDoc(::OpenAPI::toJsonValue(res).toObject());
-    socket->writeJson(resDoc);
+    socket->write(::OpenAPI::toStringValue(res).toUtf8());
     if(socket->isOpen()){
         socket->close();
     }
 }
 
 void OAIUserApiRequest::logoutUserResponse(){
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::OK);
     if(socket->isOpen()){
         socket->close();
@@ -248,7 +247,7 @@ void OAIUserApiRequest::logoutUserResponse(){
 }
 
 void OAIUserApiRequest::updateUserResponse(){
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::OK);
     if(socket->isOpen()){
         socket->close();
@@ -258,7 +257,7 @@ void OAIUserApiRequest::updateUserResponse(){
 
 void OAIUserApiRequest::createUserError(QNetworkReply::NetworkError error_type, QString& error_str){
     Q_UNUSED(error_type); // TODO: Remap error_type to QHttpEngine::Socket errors
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::NotFound);
     socket->write(error_str.toUtf8());
     if(socket->isOpen()){
@@ -268,7 +267,7 @@ void OAIUserApiRequest::createUserError(QNetworkReply::NetworkError error_type, 
 
 void OAIUserApiRequest::createUsersWithArrayInputError(QNetworkReply::NetworkError error_type, QString& error_str){
     Q_UNUSED(error_type); // TODO: Remap error_type to QHttpEngine::Socket errors
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::NotFound);
     socket->write(error_str.toUtf8());
     if(socket->isOpen()){
@@ -278,7 +277,7 @@ void OAIUserApiRequest::createUsersWithArrayInputError(QNetworkReply::NetworkErr
 
 void OAIUserApiRequest::createUsersWithListInputError(QNetworkReply::NetworkError error_type, QString& error_str){
     Q_UNUSED(error_type); // TODO: Remap error_type to QHttpEngine::Socket errors
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::NotFound);
     socket->write(error_str.toUtf8());
     if(socket->isOpen()){
@@ -288,7 +287,7 @@ void OAIUserApiRequest::createUsersWithListInputError(QNetworkReply::NetworkErro
 
 void OAIUserApiRequest::deleteUserError(QNetworkReply::NetworkError error_type, QString& error_str){
     Q_UNUSED(error_type); // TODO: Remap error_type to QHttpEngine::Socket errors
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::NotFound);
     socket->write(error_str.toUtf8());
     if(socket->isOpen()){
@@ -311,8 +310,7 @@ void OAIUserApiRequest::loginUserError(const QString& res, QNetworkReply::Networ
     Q_UNUSED(error_type); // TODO: Remap error_type to QHttpEngine::Socket errors
     writeResponseHeaders();
     Q_UNUSED(error_str);  // response will be used instead of error string
-    QJsonDocument resDoc(::OpenAPI::toJsonValue(res).toObject());
-    socket->writeJson(resDoc);
+    socket->write(::OpenAPI::toStringValue(res).toUtf8());
     if(socket->isOpen()){
         socket->close();
     }
@@ -320,7 +318,7 @@ void OAIUserApiRequest::loginUserError(const QString& res, QNetworkReply::Networ
 
 void OAIUserApiRequest::logoutUserError(QNetworkReply::NetworkError error_type, QString& error_str){
     Q_UNUSED(error_type); // TODO: Remap error_type to QHttpEngine::Socket errors
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::NotFound);
     socket->write(error_str.toUtf8());
     if(socket->isOpen()){
@@ -330,7 +328,7 @@ void OAIUserApiRequest::logoutUserError(QNetworkReply::NetworkError error_type, 
 
 void OAIUserApiRequest::updateUserError(QNetworkReply::NetworkError error_type, QString& error_str){
     Q_UNUSED(error_type); // TODO: Remap error_type to QHttpEngine::Socket errors
-    writeResponseHeaders();    
+    writeResponseHeaders();
     socket->setStatusCode(QHttpEngine::Socket::NotFound);
     socket->write(error_str.toUtf8());
     if(socket->isOpen()){
@@ -340,13 +338,19 @@ void OAIUserApiRequest::updateUserError(QNetworkReply::NetworkError error_type, 
 
 
 void OAIUserApiRequest::sendCustomResponse(QByteArray & res, QNetworkReply::NetworkError error_type){
-    Q_UNUSED(res);  // TODO
     Q_UNUSED(error_type); // TODO
+    socket->write(res);
+    if(socket->isOpen()){
+        socket->close();
+    }    
 }
-    
+
 void OAIUserApiRequest::sendCustomResponse(QIODevice *res, QNetworkReply::NetworkError error_type){
-    Q_UNUSED(res);  // TODO
-    Q_UNUSED(error_type); // TODO
+    Q_UNUSED(error_type);  // TODO
+    socket->write(res->readAll());
+    if(socket->isOpen()){
+        socket->close();
+    }
 }
 
 }

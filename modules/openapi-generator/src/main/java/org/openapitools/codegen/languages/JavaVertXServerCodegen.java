@@ -22,18 +22,14 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.PathItem.HttpMethod;
 import io.swagger.v3.oas.models.media.Schema;
-
-import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenModel;
-import org.openapitools.codegen.CodegenOperation;
-import org.openapitools.codegen.CodegenProperty;
-import org.openapitools.codegen.CodegenType;
-import org.openapitools.codegen.SupportingFile;
+import io.swagger.v3.oas.models.servers.Server;
+import org.openapitools.codegen.*;
 import org.openapitools.codegen.utils.URLPathUtils;
 
 import java.io.File;
 import java.net.URL;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
@@ -175,7 +171,7 @@ public class JavaVertXServerCodegen extends AbstractJavaCodegen {
         if (operations != null) {
             List<CodegenOperation> ops = (List<CodegenOperation>) operations.get("operation");
             for (CodegenOperation operation : ops) {
-                operation.httpMethod = operation.httpMethod.toLowerCase();
+                operation.httpMethod = operation.httpMethod.toLowerCase(Locale.ROOT);
 
                 if ("Void".equalsIgnoreCase(operation.returnType)) {
                     operation.returnType = null;
@@ -198,17 +194,16 @@ public class JavaVertXServerCodegen extends AbstractJavaCodegen {
 
 
     @Override
-    public CodegenOperation fromOperation(String path, String httpMethod, Operation operation,
-                                          Map<String, Schema> definitions, OpenAPI openAPI) {
+    public CodegenOperation fromOperation(String path, String httpMethod, Operation operation, List<Server> servers) {
         CodegenOperation codegenOperation =
-                super.fromOperation(path, httpMethod, operation, definitions, openAPI);
+                super.fromOperation(path, httpMethod, operation, servers);
         codegenOperation.imports.add("MainApiException");
         return codegenOperation;
     }
 
     @Override
-    public CodegenModel fromModel(String name, Schema model, Map<String, Schema> allDefinitions) {
-        CodegenModel codegenModel = super.fromModel(name, model, allDefinitions);
+    public CodegenModel fromModel(String name, Schema model) {
+        CodegenModel codegenModel = super.fromModel(name, model);
         codegenModel.imports.remove("ApiModel");
         codegenModel.imports.remove("ApiModelProperty");
         return codegenModel;
@@ -251,7 +246,7 @@ public class JavaVertXServerCodegen extends AbstractJavaCodegen {
                 serviceIdTemp = computeServiceId(pathname, entry);
                 entry.getValue().addExtension("x-serviceid", serviceIdTemp);
                 entry.getValue().addExtension("x-serviceid-varname",
-                        serviceIdTemp.toUpperCase() + "_SERVICE_ID");
+                        serviceIdTemp.toUpperCase(Locale.ROOT) + "_SERVICE_ID");
             }
         }
     }
@@ -284,7 +279,7 @@ public class JavaVertXServerCodegen extends AbstractJavaCodegen {
         pattern = Pattern.compile("(_)(.)");
         matcher = pattern.matcher(word);
         while (matcher.find()) {
-            word = matcher.replaceFirst(matcher.group(2).toUpperCase());
+            word = matcher.replaceFirst(matcher.group(2).toUpperCase(Locale.ROOT));
             matcher = pattern.matcher(word);
         }
         return word;

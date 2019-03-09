@@ -17,26 +17,26 @@
 
 package org.openapitools.codegen.languages;
 
-import java.text.SimpleDateFormat;
-
-
+import io.swagger.v3.oas.models.media.Schema;
 import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenType;
 import org.openapitools.codegen.CodegenConstants;
+import org.openapitools.codegen.CodegenType;
 import org.openapitools.codegen.SupportingFile;
-
-import io.swagger.v3.oas.models.media.*;
-
-import java.io.File;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.Map;
+
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public class RubyOnRailsServerCodegen extends AbstractRubyCodegen {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RubyOnRailsServerCodegen.class);
-    private static final SimpleDateFormat MIGRATE_FILE_NAME_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
+    private static final SimpleDateFormat MIGRATE_FILE_NAME_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss", Locale.ROOT);
 
     protected String gemName;
     protected String moduleName;

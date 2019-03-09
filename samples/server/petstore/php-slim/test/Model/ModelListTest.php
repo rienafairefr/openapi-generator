@@ -24,6 +24,7 @@
  */
 namespace OpenAPIServer\Model;
 
+use PHPUnit\Framework\TestCase;
 use OpenAPIServer\Model\ModelList;
 
 /**
@@ -36,48 +37,49 @@ use OpenAPIServer\Model\ModelList;
  * @link     https://github.com/openapitools/openapi-generator
  * @coversDefaultClass \OpenAPIServer\Model\ModelList
  */
-class ModelListTest extends \PHPUnit_Framework_TestCase {
+class ModelListTest extends TestCase
+{
 
     /**
      * Setup before running any test cases
      */
-    public static function setUpBeforeClass() {
-
+    public static function setUpBeforeClass()
+    {
     }
 
     /**
      * Setup before running each test case
      */
-    public function setUp() {
-
+    public function setUp()
+    {
     }
 
     /**
      * Clean up after running each test case
      */
-    public function tearDown() {
-
+    public function tearDown()
+    {
     }
 
     /**
      * Clean up after running all test cases
      */
-    public static function tearDownAfterClass() {
-
+    public static function tearDownAfterClass()
+    {
     }
 
     /**
      * Test "ModelList"
      */
-    public function testModelList() {
+    public function testModelList()
+    {
         $testModelList = new ModelList();
     }
 
     /**
      * Test attribute "_123list"
      */
-    public function testProperty123list() {
-
+    public function testProperty123list()
+    {
     }
 }
-

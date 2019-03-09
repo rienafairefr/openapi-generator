@@ -17,19 +17,17 @@
 
 package org.openapitools.codegen;
 
-import org.openapitools.codegen.options.OptionsProvider;
-
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-
 import mockit.FullVerifications;
-
 import org.apache.commons.lang3.StringUtils;
+import org.openapitools.codegen.options.OptionsProvider;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public abstract class AbstractOptionsTest {
@@ -58,12 +56,12 @@ public abstract class AbstractOptionsTest {
         final Set<String> skipped = new HashSet<String>(cliOptions);
         skipped.removeAll(testOptions);
         if (!skipped.isEmpty()) {
-            Assert.fail(String.format("These options weren't checked: %s.", StringUtils.join(skipped, ", ")));
+            Assert.fail(String.format(Locale.ROOT, "These options weren't checked: %s.", StringUtils.join(skipped, ", ")));
         }
         final Set<String> undocumented = new HashSet<String>(testOptions);
         undocumented.removeAll(cliOptions);
         if (!undocumented.isEmpty()) {
-            Assert.fail(String.format("These options weren't documented: %s. Are you expecting base options and calling cliOptions.clear()?", StringUtils.join(undocumented, ", ")));
+            Assert.fail(String.format(Locale.ROOT,"These options weren't documented: %s. Are you expecting base options and calling cliOptions.clear()?", StringUtils.join(undocumented, ", ")));
         }
     }
 

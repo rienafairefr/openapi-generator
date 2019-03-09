@@ -226,5 +226,47 @@ module Petstore
           },
       }
     end
+
+    # Returns an array of Server setting
+    def server_settings
+      [
+        {
+          url: "http://petstore.swagger.io:80/v2",
+          description: "No descriptoin provided",
+        }
+      ]
+    end
+
+    # Returns URL based on server settings
+    #
+    # @param index array index of the server settings
+    # @param variables hash of variable and the corresponding value
+    def server_url(index, variables = {})
+      servers = server_settings
+
+      # check array index out of bound
+      if (index < 0 || index >= servers.size)
+        fail ArgumentError, "Invalid index #{index} when selecting the server. Must be less than #{servers.size}"
+      end
+
+      server = servers[index]
+      url = server[:url]
+
+      # go through variable and assign a value
+      server[:variables].each do |name, variable|
+        if variables.key?(name)
+          if (server[:variables][name][:enum_values].include? variables[name])
+            url.gsub! "{" + name.to_s + "}", variables[name]
+          else
+            fail ArgumentError, "The variable `#{name}` in the server URL has invalid value #{variables[name]}. Must be #{server[:variables][name][:enum_values]}."
+          end
+        else
+          # use default value
+          url.gsub! "{" + name.to_s + "}", server[:variables][name][:default_value]
+        end
+      end
+
+      url
+    end
   end
 end

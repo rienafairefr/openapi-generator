@@ -17,8 +17,10 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.io.Serializable;
 import javax.validation.constraints.*;
+import javax.validation.Valid;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * Gets or Sets OuterEnum
@@ -35,6 +37,11 @@ public enum OuterEnum {
 
   OuterEnum(String value) {
     this.value = value;
+  }
+
+  @JsonValue
+  public String getValue() {
+    return value;
   }
 
   @Override

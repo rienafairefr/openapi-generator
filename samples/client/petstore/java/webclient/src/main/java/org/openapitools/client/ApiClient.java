@@ -2,6 +2,7 @@ package org.openapitools.client;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -33,6 +34,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
+import java.util.Optional;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -76,7 +78,7 @@ public class ApiClient {
     }
 
     private HttpHeaders defaultHeaders = new HttpHeaders();
-    
+
     private String basePath = "http://petstore.swagger.io:80/v2";
 
     private final WebClient webClient;
@@ -87,16 +89,27 @@ public class ApiClient {
 
     public ApiClient() {
         this.dateFormat = createDefaultDateFormat();
-        this.webClient = buildWebClient(new ObjectMapper(), this.dateFormat);
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setDateFormat(dateFormat);
+        mapper.registerModule(new JavaTimeModule());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        this.webClient = buildWebClient(mapper);
+        this.init();
     }
 
     public ApiClient(ObjectMapper mapper, DateFormat format) {
-        this(buildWebClient(mapper.copy(), format), format);
+        this(buildWebClient(mapper.copy()), format);
+    }
+
+    public ApiClient(WebClient webClient, ObjectMapper mapper, DateFormat format) {
+        this(Optional.ofNullable(webClient).orElseGet(() ->buildWebClient(mapper.copy())), format);
     }
 
     private ApiClient(WebClient webClient, DateFormat format) {
         this.webClient = webClient;
         this.dateFormat = format;
+        this.init();
     }
 
     public DateFormat createDefaultDateFormat() {
@@ -104,7 +117,7 @@ public class ApiClient {
         dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         return dateFormat;
     }
-    
+
     protected void init() {
         // Setup authentications (key: authentication name, value: authentication).
         authentications = new HashMap<String, Authentication>();
@@ -120,9 +133,7 @@ public class ApiClient {
     * Build the RestTemplate used to make HTTP requests.
     * @return RestTemplate
     */
-    public static WebClient buildWebClient(ObjectMapper mapper, DateFormat dateFormat) {
-        mapper.setDateFormat(dateFormat);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    public static WebClient buildWebClient(ObjectMapper mapper) {
         ExchangeStrategies strategies = ExchangeStrategies
             .builder()
             .codecs(clientDefaultCodecsConfigurer -> {
@@ -133,7 +144,7 @@ public class ApiClient {
         return webClient.build();
     }
 
-    
+
     /**
      * Get the current base path
      * @return String the base path
@@ -464,22 +475,7 @@ public class ApiClient {
      */
     public <T> Mono<T> invokeAPI(String path, HttpMethod method, MultiValueMap<String, String> queryParams, Object body, HttpHeaders headerParams, MultiValueMap<String, Object> formParams, List<MediaType> accept, MediaType contentType, String[] authNames, ParameterizedTypeReference<T> returnType) throws RestClientException {
         final WebClient.RequestBodySpec requestBuilder = prepareRequest(path, method, queryParams, body, headerParams, formParams, accept, contentType, authNames);
-
-        return requestBuilder.exchange()
-            .flatMap(response -> {
-                HttpStatus statusCode = response.statusCode();
-                if (response.statusCode() == HttpStatus.NO_CONTENT) {
-                    return Mono.empty();
-                } else if (statusCode.is2xxSuccessful()) {
-                    if (returnType == null) {
-                        return Mono.empty();
-                    } else {
-                        return response.bodyToMono(returnType);
-                    }
-                } else {
-                    return Mono.error(new RestClientException("API returned " + statusCode + " and it wasn't handled by the RestTemplate error handler"));
-                }
-        });
+        return requestBuilder.retrieve().bodyToMono(returnType);
     }
 
     /**
@@ -500,23 +496,7 @@ public class ApiClient {
      */
     public <T> Flux<T> invokeFluxAPI(String path, HttpMethod method, MultiValueMap<String, String> queryParams, Object body, HttpHeaders headerParams, MultiValueMap<String, Object> formParams, List<MediaType> accept, MediaType contentType, String[] authNames, ParameterizedTypeReference<T> returnType) throws RestClientException {
         final WebClient.RequestBodySpec requestBuilder = prepareRequest(path, method, queryParams, body, headerParams, formParams, accept, contentType, authNames);
-
-        return requestBuilder.exchange()
-            .flatMapMany(response -> {
-                HttpStatus statusCode = response.statusCode();
-                ClientResponse.Headers headers = response.headers();
-                if (response.statusCode() == HttpStatus.NO_CONTENT) {
-                    return Flux.empty();
-                } else if (statusCode.is2xxSuccessful()) {
-                    if (returnType == null) {
-                        return Flux.empty();
-                    } else {
-                        return response.bodyToFlux(returnType);
-                    }
-                } else {
-                    return Flux.error(new RestClientException("API returned " + statusCode + " and it wasn't handled by the RestTemplate error handler"));
-                }
-            });
+        return requestBuilder.retrieve().bodyToFlux(returnType);
     }
 
     private WebClient.RequestBodySpec prepareRequest(String path, HttpMethod method, MultiValueMap<String, String> queryParams, Object body, HttpHeaders headerParams, MultiValueMap<String, Object> formParams, List<MediaType> accept, MediaType contentType, String[] authNames) {
@@ -539,7 +519,7 @@ public class ApiClient {
             builder.queryParams(queryParams);
         }
 
-        final WebClient.RequestBodySpec requestBuilder = webClient.method(method).uri(builder.build().toUri());
+        final WebClient.RequestBodySpec requestBuilder = webClient.method(method).uri(builder.build(true).toUri());
         if(accept != null) {
             requestBuilder.accept(accept.toArray(new MediaType[accept.size()]));
         }
@@ -586,7 +566,7 @@ public class ApiClient {
             auth.applyToParams(queryParams, headerParams);
         }
     }
-    
+
     private class ApiClientHttpRequestInterceptor implements ClientHttpRequestInterceptor {
         private final Log log = LogFactory.getLog(ApiClientHttpRequestInterceptor.class);
 
@@ -625,7 +605,7 @@ public class ApiClient {
             builder.setLength(builder.length() - 1); // Get rid of trailing comma
             return builder.toString();
         }
-        
+
         private String bodyToString(InputStream body) throws IOException {
             StringBuilder builder = new StringBuilder();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(body, StandardCharsets.UTF_8));

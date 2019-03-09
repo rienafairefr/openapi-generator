@@ -24,6 +24,7 @@
  */
 namespace OpenAPIServer\Model;
 
+use PHPUnit\Framework\TestCase;
 use OpenAPIServer\Model\Capitalization;
 
 /**
@@ -36,83 +37,84 @@ use OpenAPIServer\Model\Capitalization;
  * @link     https://github.com/openapitools/openapi-generator
  * @coversDefaultClass \OpenAPIServer\Model\Capitalization
  */
-class CapitalizationTest extends \PHPUnit_Framework_TestCase {
+class CapitalizationTest extends TestCase
+{
 
     /**
      * Setup before running any test cases
      */
-    public static function setUpBeforeClass() {
-
+    public static function setUpBeforeClass()
+    {
     }
 
     /**
      * Setup before running each test case
      */
-    public function setUp() {
-
+    public function setUp()
+    {
     }
 
     /**
      * Clean up after running each test case
      */
-    public function tearDown() {
-
+    public function tearDown()
+    {
     }
 
     /**
      * Clean up after running all test cases
      */
-    public static function tearDownAfterClass() {
-
+    public static function tearDownAfterClass()
+    {
     }
 
     /**
      * Test "Capitalization"
      */
-    public function testCapitalization() {
+    public function testCapitalization()
+    {
         $testCapitalization = new Capitalization();
     }
 
     /**
      * Test attribute "smallCamel"
      */
-    public function testPropertySmallCamel() {
-
+    public function testPropertySmallCamel()
+    {
     }
 
     /**
      * Test attribute "capitalCamel"
      */
-    public function testPropertyCapitalCamel() {
-
+    public function testPropertyCapitalCamel()
+    {
     }
 
     /**
      * Test attribute "smallSnake"
      */
-    public function testPropertySmallSnake() {
-
+    public function testPropertySmallSnake()
+    {
     }
 
     /**
      * Test attribute "capitalSnake"
      */
-    public function testPropertyCapitalSnake() {
-
+    public function testPropertyCapitalSnake()
+    {
     }
 
     /**
      * Test attribute "sCAETHFlowPoints"
      */
-    public function testPropertySCAETHFlowPoints() {
-
+    public function testPropertySCAETHFlowPoints()
+    {
     }
 
     /**
      * Test attribute "aTTNAME"
      */
-    public function testPropertyATTNAME() {
-
+    public function testPropertyATTNAME()
+    {
     }
 }
-

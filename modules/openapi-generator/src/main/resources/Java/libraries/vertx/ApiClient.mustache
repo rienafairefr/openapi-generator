@@ -3,7 +3,9 @@ package {{invokerPackage}};
 import {{invokerPackage}}.auth.Authentication;
 import {{invokerPackage}}.auth.HttpBasicAuth;
 import {{invokerPackage}}.auth.ApiKeyAuth;
+{{#hasOAuthMethods}}
 import {{invokerPackage}}.auth.OAuth;
+{{/hasOAuthMethods}}
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -18,6 +20,7 @@ import io.vertx.core.file.FileSystem;
 import io.vertx.core.file.OpenOptions;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.HttpRequest;
@@ -218,6 +221,7 @@ public class ApiClient {
         throw new RuntimeException("No API key authentication configured!");
     }
 
+    {{#hasOAuthMethods}}
     /**
      * Helper method to set access token for the first OAuth2 authentication.
      *
@@ -233,6 +237,7 @@ public class ApiClient {
         throw new RuntimeException("No OAuth2 authentication configured!");
     }
 
+    {{/hasOAuthMethods}}
     /**
      * Format the given Date object into string.
      *
@@ -553,7 +558,11 @@ public class ApiClient {
                             handleFileDownload(httpResponse, handler);
                             return;
                         } else {
-                            resultContent = Json.decodeValue(httpResponse.body(), returnType);
+                            try {
+                                resultContent = Json.mapper.readValue(httpResponse.bodyAsString(), returnType);
+                            } catch (Exception e) {
+                                throw new DecodeException("Failed to decode:" + e.getMessage(), e);
+                            }
                         }
                         result = Future.succeededFuture(resultContent);
                     }

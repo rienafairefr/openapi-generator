@@ -1,5 +1,4 @@
-/*
- * Copyright 2018 OpenAPI-Generator Contributors (https://openapi-generator.tech)
+/*ap Copyright 2018 OpenAPI-Generator Contributors (https://openapi-generator.tech)
  * Copyright 2018 SmartBear Software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,29 +16,22 @@
 
 package org.openapitools.codegen.languages;
 
-import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenConfig;
-import org.openapitools.codegen.CodegenConstants;
-import org.openapitools.codegen.CodegenOperation;
-import org.openapitools.codegen.CodegenParameter;
-import org.openapitools.codegen.CodegenProperty;
-import org.openapitools.codegen.DefaultCodegen;
-import org.openapitools.codegen.utils.ModelUtils;
-
-import io.swagger.v3.oas.models.media.*;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.HashSet;
-import java.util.regex.Matcher;
-
+import io.swagger.v3.oas.models.media.ArraySchema;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.StringSchema;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-
+import org.openapitools.codegen.*;
+import org.openapitools.codegen.utils.ModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.*;
+import java.util.regex.Matcher;
+
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public abstract class AbstractPhpCodegen extends DefaultCodegen implements CodegenConfig {
 
@@ -48,11 +40,6 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
     public static final String VARIABLE_NAMING_CONVENTION = "variableNamingConvention";
     public static final String PACKAGE_NAME = "packageName";
     public static final String SRC_BASE_PATH = "srcBasePath";
-    // composerVendorName/composerProjectName has be replaced by gitUserId/gitRepoId. prepare to remove these.
-    // public static final String COMPOSER_VENDOR_NAME = "composerVendorName";
-    // public static final String COMPOSER_PROJECT_NAME = "composerProjectName";
-    // protected String composerVendorName = null;
-    // protected String composerProjectName = null;
     protected String invokerPackage = "php";
     protected String packageName = "php-base";
     protected String artifactVersion = null;
@@ -62,8 +49,11 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
     protected String apiDirName = "Api";
     protected String modelDirName = "Model";
     protected String variableNamingConvention = "snake_case";
-    protected String apiDocPath = docsBasePath + File.separator + apiDirName;
-    protected String modelDocPath = docsBasePath + File.separator + modelDirName;
+    protected String apiDocPath = docsBasePath + "/" + apiDirName;
+    protected String modelDocPath = docsBasePath + "/" + modelDirName;
+    protected String interfaceNamePrefix = "", interfaceNameSuffix = "Interface";
+    protected String abstractNamePrefix = "Abstract", abstractNameSuffix = "";
+    protected String traitNamePrefix = "", traitNameSuffix = "Trait";
 
     public AbstractPhpCodegen() {
         super();
@@ -142,9 +132,7 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
         cliOptions.add(new CliOption(CodegenConstants.INVOKER_PACKAGE, "The main namespace to use for all classes. e.g. Yay\\Pets"));
         cliOptions.add(new CliOption(PACKAGE_NAME, "The main package name for classes. e.g. GeneratedPetstore"));
         cliOptions.add(new CliOption(SRC_BASE_PATH, "The directory to serve as source root."));
-        // cliOptions.add(new CliOption(COMPOSER_VENDOR_NAME, "The vendor name used in the composer package name. The template uses {{composerVendorName}}/{{composerProjectName}} for the composer package name. e.g. yaypets. IMPORTANT NOTE (2016/03): composerVendorName will be deprecated and replaced by gitUserId in the next openapi-generator release"));
         cliOptions.add(new CliOption(CodegenConstants.GIT_USER_ID, CodegenConstants.GIT_USER_ID_DESC));
-        // cliOptions.add(new CliOption(COMPOSER_PROJECT_NAME, "The project name used in the composer package name. The template uses {{composerVendorName}}/{{composerProjectName}} for the composer package name. e.g. petstore-client. IMPORTANT NOTE (2016/03): composerProjectName will be deprecated and replaced by gitRepoId in the next openapi-generator release"));
         cliOptions.add(new CliOption(CodegenConstants.GIT_REPO_ID, CodegenConstants.GIT_REPO_ID_DESC));
         cliOptions.add(new CliOption(CodegenConstants.ARTIFACT_VERSION, "The version to use in the composer package version field. e.g. 1.2.3"));
     }
@@ -152,6 +140,11 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
     @Override
     public void processOpts() {
         super.processOpts();
+
+        if (StringUtils.isEmpty(System.getenv("PHP_POST_PROCESS_FILE"))) {
+            LOGGER.info("Environment variable PHP_POST_PROCESS_FILE not defined so the PHP code may not be properly formatted. To define it, try 'export PHP_POST_PROCESS_FILE=\"/usr/local/bin/prettier --write\"' (Linux/Mac)");
+            LOGGER.info("NOTE: To enable file post-processing, 'enablePostProcessFile' must be set to `true` (--enable-post-process-file for CLI).");
+        }
 
         if (additionalProperties.containsKey(PACKAGE_NAME)) {
             this.setPackageName((String) additionalProperties.get(PACKAGE_NAME));
@@ -187,23 +180,11 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
         }
         additionalProperties.put(CodegenConstants.API_PACKAGE, apiPackage);
 
-        // if (additionalProperties.containsKey(COMPOSER_PROJECT_NAME)) {
-        //     this.setComposerProjectName((String) additionalProperties.get(COMPOSER_PROJECT_NAME));
-        // } else {
-        //     additionalProperties.put(COMPOSER_PROJECT_NAME, composerProjectName);
-        // }
-
         if (additionalProperties.containsKey(CodegenConstants.GIT_USER_ID)) {
             this.setGitUserId((String) additionalProperties.get(CodegenConstants.GIT_USER_ID));
         } else {
             additionalProperties.put(CodegenConstants.GIT_USER_ID, gitUserId);
         }
-
-        // if (additionalProperties.containsKey(COMPOSER_VENDOR_NAME)) {
-        //     this.setComposerVendorName((String) additionalProperties.get(COMPOSER_VENDOR_NAME));
-        // } else {
-        //     additionalProperties.put(COMPOSER_VENDOR_NAME, composerVendorName);
-        // }
 
         if (additionalProperties.containsKey(CodegenConstants.GIT_REPO_ID)) {
             this.setGitRepoId((String) additionalProperties.get(CodegenConstants.GIT_REPO_ID));
@@ -236,8 +217,19 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
         // make test path available in mustache template
         additionalProperties.put("testBasePath", testBasePath);
 
+        // make class prefixes and suffixes available in mustache templates
+        additionalProperties.put("interfaceNamePrefix", interfaceNamePrefix);
+        additionalProperties.put("interfaceNameSuffix", interfaceNameSuffix);
+        additionalProperties.put("abstractNamePrefix", abstractNamePrefix);
+        additionalProperties.put("abstractNameSuffix", abstractNameSuffix);
+        additionalProperties.put("traitNamePrefix", traitNamePrefix);
+        additionalProperties.put("traitNameSuffix", traitNameSuffix);
+
         // apache v2 license
         // supportingFiles.add(new SupportingFile("LICENSE", "", "LICENSE"));
+
+        // all PHP codegens requires Composer, it means that we need to exclude from SVN at least vendor folder
+        supportingFiles.add(new SupportingFile(".gitignore", "", ".gitignore"));
     }
 
     public String getPackageName() {
@@ -250,27 +242,13 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
             basePath = basePath.replaceAll("[\\\\/]?$", "") + '/'; // FIXME: a parameter should not be assigned. Also declare the methods parameters as 'final'.
         }
 
-        String regFirstPathSeparator;
-        if ("/".equals(File.separator)) { // for mac, linux
-            regFirstPathSeparator = "^/";
-        } else { // for windows
-            regFirstPathSeparator = "^\\\\";
-        }
-
-        String regLastPathSeparator;
-        if ("/".equals(File.separator)) { // for mac, linux
-            regLastPathSeparator = "/$";
-        } else { // for windows
-            regLastPathSeparator = "\\\\$";
-        }
-
         return (basePath
                 // Replace period, backslash, forward slash with file separator in package name
                 + packageName.replaceAll("[\\.\\\\/]", Matcher.quoteReplacement("/"))
                 // Trim prefix file separators from package path
-                .replaceAll(regFirstPathSeparator, ""))
+                .replaceAll("^/", ""))
                 // Trim trailing file separators from the overall path
-                .replaceAll(regLastPathSeparator + "$", "");
+                .replaceAll("/$", "");
     }
 
     @Override
@@ -326,9 +304,17 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
         if (ModelUtils.isArraySchema(p)) {
             ArraySchema ap = (ArraySchema) p;
             Schema inner = ap.getItems();
+            if (inner == null) {
+                LOGGER.warn(ap.getName() + "(array property) does not have a proper inner type defined.Default to string");
+                inner = new StringSchema().description("TODO default missing array inner type to string");
+            }
             return getTypeDeclaration(inner) + "[]";
         } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
+            Schema inner = ModelUtils.getAdditionalProperties(p);
+            if (inner == null) {
+                LOGGER.warn(p.getName() + "(map property) does not have a proper inner type defined. Default to string");
+                inner = new StringSchema().description("TODO default missing map inner type to string");
+            }
             return getSchemaType(p) + "[string," + getTypeDeclaration(inner) + "]";
         } else if (StringUtils.isNotBlank(p.get$ref())) { // model
             String type = super.getTypeDeclaration(p);
@@ -389,14 +375,6 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
     public void setParameterNamingConvention(String variableNamingConvention) {
         this.variableNamingConvention = variableNamingConvention;
     }
-
-    // public void setComposerVendorName(String composerVendorName) {
-    //     this.composerVendorName = composerVendorName;
-    // }
-
-    // public void setComposerProjectName(String composerProjectName) {
-    //     this.composerProjectName = composerProjectName;
-    // }
 
     @Override
     public String toVarName(String name) {
@@ -479,6 +457,36 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
         return toModelName(name) + "Test";
     }
 
+    /**
+     * Output the proper interface name (capitalized).
+     *
+     * @param name the name of the interface
+     * @return capitalized model name
+     */
+    public String toInterfaceName(final String name) {
+        return camelize(interfaceNamePrefix + name + interfaceNameSuffix);
+    }
+
+    /**
+     * Output the proper abstract class name (capitalized).
+     *
+     * @param name the name of the class
+     * @return capitalized abstract class name
+     */
+    public String toAbstractName(final String name) {
+        return camelize(abstractNamePrefix + name + abstractNameSuffix);
+    }
+
+    /**
+     * Output the proper trait name (capitalized).
+     *
+     * @param name the name of the trait
+     * @return capitalized trait name
+     */
+    public String toTraitName(final String name) {
+        return camelize(traitNamePrefix + name + traitNameSuffix);
+    }
+
     @Override
     public String toOperationId(String operationId) {
         // throw exception if method name is empty
@@ -503,7 +511,6 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
 
     /**
      * Return the default value of the property
-     *
      * @param p Swagger property object
      * @return string presentation of the default value of the property
      */
@@ -623,7 +630,7 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
 
         // for symbol, e.g. $, #
         if (getSymbolName(name) != null) {
-            return (getSymbolName(name)).toUpperCase();
+            return (getSymbolName(name)).toUpperCase(Locale.ROOT);
         }
 
         // number
@@ -636,7 +643,7 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
         }
 
         // string
-        String enumName = sanitizeName(underscore(name).toUpperCase());
+        String enumName = sanitizeName(underscore(name).toUpperCase(Locale.ROOT));
         enumName = enumName.replaceFirst("^_", "");
         enumName = enumName.replaceFirst("_$", "");
 
@@ -649,7 +656,7 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
 
     @Override
     public String toEnumName(CodegenProperty property) {
-        String enumName = underscore(toModelName(property.name)).toUpperCase();
+        String enumName = underscore(toModelName(property.name)).toUpperCase(Locale.ROOT);
 
         // remove [] for array or map of enum
         enumName = enumName.replace("[]", "");
@@ -723,5 +730,32 @@ public abstract class AbstractPhpCodegen extends DefaultCodegen implements Codeg
 
         final int lastBackslashIndex = phpClassName.lastIndexOf('\\');
         return phpClassName.substring(lastBackslashIndex + 1);
+    }
+
+    @Override
+    public void postProcessFile(File file, String fileType) {
+        if (file == null) {
+            return;
+        }
+        String phpPostProcessFile = System.getenv("PHP_POST_PROCESS_FILE");
+        if (StringUtils.isEmpty(phpPostProcessFile)) {
+            return; // skip if PHP_POST_PROCESS_FILE env variable is not defined
+        }
+        // only process files with php extension
+        if ("php".equals(FilenameUtils.getExtension(file.toString()))) {
+            String command = phpPostProcessFile + " " + file.toString();
+            try {
+                Process p = Runtime.getRuntime().exec(command);
+                p.waitFor();
+                int exitValue = p.exitValue();
+                if (exitValue != 0) {
+                    LOGGER.error("Error running the command ({}). Exit value: {}", command, exitValue);
+                } else {
+                    LOGGER.info("Successfully executed: " + command);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error running the command ({}). Exception: {}", command, e.getMessage());
+            }
+        }
     }
 }

@@ -27,7 +27,6 @@ open class PetAPI {
         }
     }
 
-
     /**
      Add a new pet to the store
      - POST /pet
@@ -65,7 +64,6 @@ open class PetAPI {
             }
         }
     }
-
 
     /**
      Deletes a pet
@@ -117,7 +115,6 @@ open class PetAPI {
         }
     }
 
-
     /**
      Finds Pets by status
      - GET /pet/findByStatus
@@ -155,7 +152,6 @@ open class PetAPI {
         }
     }
 
-
     /**
      Finds Pets by tags
      - GET /pet/findByTags
@@ -192,7 +188,6 @@ open class PetAPI {
             completion(response?.body, error)
         }
     }
-
 
     /**
      Find pet by ID
@@ -235,7 +230,6 @@ open class PetAPI {
         }
     }
 
-
     /**
      Update an existing pet
      - PUT /pet
@@ -274,7 +268,6 @@ open class PetAPI {
             }
         }
     }
-
 
     /**
      Updates a pet in the store with form data
@@ -322,7 +315,6 @@ open class PetAPI {
         }
     }
 
-
     /**
      uploads an image
      - POST /pet/{petId}/uploadImage
@@ -343,6 +335,52 @@ open class PetAPI {
         let formParams: [String:Any?] = [
             "additionalMetadata": additionalMetadata,
             "file": file
+        ]
+
+        let nonNullParameters = APIHelper.rejectNil(formParams)
+        let parameters = APIHelper.convertBoolToString(nonNullParameters)
+        
+        let url = URLComponents(string: URLString)
+
+        let requestBuilder: RequestBuilder<ApiResponse>.Type = PetstoreClientAPI.requestBuilderFactory.getBuilder()
+
+        return requestBuilder.init(method: "POST", URLString: (url?.string ?? URLString), parameters: parameters, isBody: false)
+    }
+
+    /**
+     uploads an image (required)
+     
+     - parameter petId: (path) ID of pet to update 
+     - parameter requiredFile: (form) file to upload 
+     - parameter additionalMetadata: (form) Additional data to pass to server (optional)
+     - parameter completion: completion handler to receive the data and the error objects
+     */
+    open class func uploadFileWithRequiredFile(petId: Int64, requiredFile: URL, additionalMetadata: String? = nil, completion: @escaping ((_ data: ApiResponse?,_ error: Error?) -> Void)) {
+        uploadFileWithRequiredFileWithRequestBuilder(petId: petId, requiredFile: requiredFile, additionalMetadata: additionalMetadata).execute { (response, error) -> Void in
+            completion(response?.body, error)
+        }
+    }
+
+    /**
+     uploads an image (required)
+     - POST /fake/{petId}/uploadImageWithRequiredFile
+     - OAuth:
+       - type: oauth2
+       - name: petstore_auth
+     - parameter petId: (path) ID of pet to update 
+     - parameter requiredFile: (form) file to upload 
+     - parameter additionalMetadata: (form) Additional data to pass to server (optional)
+     - returns: RequestBuilder<ApiResponse> 
+     */
+    open class func uploadFileWithRequiredFileWithRequestBuilder(petId: Int64, requiredFile: URL, additionalMetadata: String? = nil) -> RequestBuilder<ApiResponse> {
+        var path = "/fake/{petId}/uploadImageWithRequiredFile"
+        let petIdPreEscape = "\(petId)"
+        let petIdPostEscape = petIdPreEscape.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        path = path.replacingOccurrences(of: "{petId}", with: petIdPostEscape, options: .literal, range: nil)
+        let URLString = PetstoreClientAPI.basePath + path
+        let formParams: [String:Any?] = [
+            "additionalMetadata": additionalMetadata,
+            "requiredFile": requiredFile
         ]
 
         let nonNullParameters = APIHelper.rejectNil(formParams)

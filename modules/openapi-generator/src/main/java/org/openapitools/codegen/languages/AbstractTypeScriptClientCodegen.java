@@ -20,6 +20,7 @@ package org.openapitools.codegen.languages;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openapitools.codegen.*;
 import org.openapitools.codegen.utils.ModelUtils;
@@ -27,10 +28,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen implements CodegenConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractTypeScriptClientCodegen.class);
+
+    protected final SimpleDateFormat SNAPSHOT_SUFFIX_FORMAT = new SimpleDateFormat("yyyyMMddHHmm", Locale.ROOT);
 
     private static final String X_DISCRIMINATOR_TYPE = "x-discriminator-value";
     private static final String UNDEFINED_VALUE = "undefined";
@@ -47,7 +56,10 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
         importMapping.clear();
 
         supportsInheritance = true;
-        
+
+        // to support multiple inheritance e.g. export interface ModelC extends ModelA, ModelB
+        //supportsMultipleInheritance = true;
+
         // NOTE: TypeScript uses camel cased reserved words, while models are title cased. We don't want lowercase comparisons.
         reservedWords.addAll(Arrays.asList(
                 // local variable names used in API methods (endpoints)
@@ -97,6 +109,7 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
         typeMapping.put("object", "any");
         typeMapping.put("integer", "number");
         typeMapping.put("Map", "any");
+        typeMapping.put("map", "any");
         typeMapping.put("date", "string");
         typeMapping.put("DateTime", "Date");
         typeMapping.put("binary", "any");
@@ -113,6 +126,10 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
     @Override
     public void processOpts() {
         super.processOpts();
+
+        if (StringUtils.isEmpty(System.getenv("TS_POST_PROCESS_FILE"))) {
+            LOGGER.info("Hint: Environment variable 'TS_POST_PROCESS_FILE' (optional) not defined. E.g. to format the source code, please try 'export TS_POST_PROCESS_FILE=\"/usr/local/bin/prettier --write\"' (Linux/Mac)");
+        }
 
         if (additionalProperties.containsKey(CodegenConstants.MODEL_PROPERTY_NAMING)) {
             setModelPropertyNaming((String) additionalProperties.get(CodegenConstants.MODEL_PROPERTY_NAMING));
@@ -139,24 +156,18 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
 
     @Override
     public String apiFileFolder() {
-        return outputFolder + "/" + apiPackage().replace('.', File.separatorChar);
+        return outputFolder + File.separator + apiPackage().replace('.', File.separatorChar);
     }
 
     @Override
     public String modelFileFolder() {
-        return outputFolder + "/" + modelPackage().replace('.', File.separatorChar);
+        return outputFolder + File.separator + modelPackage().replace('.', File.separatorChar);
     }
 
     @Override
     public String toParamName(String name) {
-        // should be the same as variable name
-        return toVarName(name);
-    }
-
-    @Override
-    public String toVarName(String name) {
         // sanitize name
-        name = sanitizeName(name, "\\W-[\\$]");
+        name = sanitizeName(name, "[^\\w$]");
 
         if ("_".equals(name)) {
             name = "_u";
@@ -175,6 +186,33 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
         }
 
         return name;
+    }
+
+    @Override
+    public String toVarName(String name) {
+        name = this.toParamName(name);
+        
+        // if the proprty name has any breaking characters such as :, ;, . etc.
+        // then wrap the name within single quotes.
+        // my:interface:property: string; => 'my:interface:property': string;
+        if (propertyHasBreakingCharacters(name)) {
+            name = "\'" + name + "\'";
+        }
+
+        return name;
+    }
+
+    /**
+     * Checks whether property names have breaking characters like ':', '-'.
+     * @param str string to check for breaking characters
+     * @return <code>true</code> if breaking characters are present and <code>false</code> if not
+     */
+    private boolean propertyHasBreakingCharacters(String str) {
+        final String regex = "^.*[+*:;,.()-]+.*$";
+        final Pattern pattern = Pattern.compile(regex);
+        final Matcher matcher = pattern.matcher(str);
+        boolean matches = matcher.matches();
+        return matches;
     }
 
     @Override
@@ -227,7 +265,7 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
             Schema inner = ap.getItems();
             return getSchemaType(p) + "<" + getTypeDeclaration(inner) + ">";
         } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
+            Schema inner = ModelUtils.getAdditionalProperties(p);
             return "{ [key: string]: " + getTypeDeclaration(inner) + "; }";
         } else if (ModelUtils.isFileSchema(p)) {
             return "any";
@@ -246,7 +284,7 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
             inner = mp1.getItems();
             return this.getSchemaType(p) + "<" + this.getParameterDataType(parameter, inner) + ">";
         } else if (ModelUtils.isMapSchema(p)) {
-            inner = (Schema) p.getAdditionalProperties();
+            inner = ModelUtils.getAdditionalProperties(p);
             return "{ [key: string]: " + this.getParameterDataType(parameter, inner) + "; }";
         } else if (ModelUtils.isStringSchema(p)) {
             // Handle string enums
@@ -326,10 +364,10 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
         } else if (ModelUtils.isDateTimeSchema(p)) {
             return UNDEFINED_VALUE;
         } else if (ModelUtils.isNumberSchema(p)) {
-           if (p.getDefault() != null) {
-             return p.getDefault().toString();
-           }
-           return UNDEFINED_VALUE;
+            if (p.getDefault() != null) {
+                return p.getDefault().toString();
+            }
+            return UNDEFINED_VALUE;
         } else if (ModelUtils.isIntegerSchema(p)) {
             if (p.getDefault() != null) {
                 return p.getDefault().toString();
@@ -345,7 +383,7 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
         }
 
     }
-    
+
     @Override
     protected boolean isReservedWord(String word) {
         // NOTE: This differs from super's implementation in that TypeScript does _not_ want case insensitive matching.
@@ -372,9 +410,9 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
             throw new RuntimeException("Empty method name (operationId) not allowed");
         }
 
-        // method name cannot use reserved keyword, e.g. return
-        // append _ at the beginning, e.g. _return
-        if (isReservedWord(operationId)) {
+        // method name cannot use reserved keyword or word starting with number, e.g. return or 123return
+        // append _ at the beginning, e.g. _return or _123return
+        if (isReservedWord(operationId) || operationId.matches("^\\d.*")) {
             return escapeReservedWord(camelize(sanitizeName(operationId), true));
         }
 
@@ -558,5 +596,33 @@ public abstract class AbstractTypeScriptClientCodegen extends DefaultCodegen imp
     @Override
     public String escapeUnsafeCharacters(String input) {
         return input.replace("*/", "*_/").replace("/*", "/_*");
+    }
+
+    @Override
+    public void postProcessFile(File file, String fileType) {
+        super.postProcessFile(file, fileType);
+
+        if (file == null) {
+            return;
+        }
+        String tsPostProcessFile = System.getenv("TS_POST_PROCESS_FILE");
+        if (StringUtils.isEmpty(tsPostProcessFile)) {
+            return; // skip if TS_POST_PROCESS_FILE env variable is not defined
+        }
+        // only process files with ts extension
+        if ("ts".equals(FilenameUtils.getExtension(file.toString()))) {
+            String command = tsPostProcessFile + " " + file.toString();
+            try {
+                Process p = Runtime.getRuntime().exec(command);
+                int exitValue = p.waitFor();
+                if (exitValue != 0) {
+                    LOGGER.error("Error running the command ({}). Exit value: {}", command, exitValue);
+                } else {
+                    LOGGER.info("Successfully executed: " + command);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error running the command ({}). Exception: {}", command, e.getMessage());
+            }
+        }
     }
 }

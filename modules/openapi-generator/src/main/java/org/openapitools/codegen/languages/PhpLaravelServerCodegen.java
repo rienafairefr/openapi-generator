@@ -17,10 +17,14 @@
 
 package org.openapitools.codegen.languages;
 
-import org.openapitools.codegen.*;
+import org.openapitools.codegen.CodegenOperation;
+import org.openapitools.codegen.CodegenType;
+import org.openapitools.codegen.SupportingFile;
 
 import java.io.File;
 import java.util.*;
+
+import static org.openapitools.codegen.utils.StringUtils.camelize;
 
 public class PhpLaravelServerCodegen extends AbstractPhpCodegen {
     protected String apiVersion = "1.0.0";
@@ -197,14 +201,14 @@ public class PhpLaravelServerCodegen extends AbstractPhpCodegen {
 
     // override with any special post-processing
     @Override
-    public Map<String, Object> postProcessOperations(Map<String, Object> objs) {
+    public Map<String, Object> postProcessOperationsWithModels(Map<String, Object> objs, List<Object> allModels) {
         @SuppressWarnings("unchecked")
         Map<String, Object> objectMap = (Map<String, Object>) objs.get("operations");
         @SuppressWarnings("unchecked")
         List<CodegenOperation> operations = (List<CodegenOperation>) objectMap.get("operation");
 
         for (CodegenOperation op : operations) {
-            op.httpMethod = op.httpMethod.toLowerCase();
+            op.httpMethod = op.httpMethod.toLowerCase(Locale.ROOT);
             // check to see if the path contains ".", which is not supported by PHP laravel
             // ref: https://github.com/swagger-api/swagger-codegen/issues/6897
             if (op.path != null && op.path.contains(".")) {

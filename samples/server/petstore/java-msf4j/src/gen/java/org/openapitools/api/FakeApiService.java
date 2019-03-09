@@ -10,9 +10,12 @@ import java.math.BigDecimal;
 import org.openapitools.model.Client;
 import java.util.Date;
 import java.io.File;
+import org.openapitools.model.FileSchemaTestClass;
 import java.util.Map;
+import org.openapitools.model.ModelApiResponse;
 import org.openapitools.model.OuterComposite;
 import org.openapitools.model.User;
+import org.openapitools.model.XmlItem;
 
 import java.util.List;
 import org.openapitools.api.NotFoundException;
@@ -24,18 +27,22 @@ import javax.ws.rs.core.SecurityContext;
 
 
 public abstract class FakeApiService {
-    public abstract Response fakeOuterBooleanSerialize(Boolean booleanPostBody
+    public abstract Response createXmlItem(XmlItem xmlItem
  ) throws NotFoundException;
-    public abstract Response fakeOuterCompositeSerialize(OuterComposite outerComposite
+    public abstract Response fakeOuterBooleanSerialize(Boolean body
+ ) throws NotFoundException;
+    public abstract Response fakeOuterCompositeSerialize(OuterComposite body
  ) throws NotFoundException;
     public abstract Response fakeOuterNumberSerialize(BigDecimal body
  ) throws NotFoundException;
     public abstract Response fakeOuterStringSerialize(String body
  ) throws NotFoundException;
-    public abstract Response testBodyWithQueryParams(String query
- ,User user
+    public abstract Response testBodyWithFileSchema(FileSchemaTestClass body
  ) throws NotFoundException;
-    public abstract Response testClientModel(Client client
+    public abstract Response testBodyWithQueryParams(String query
+ ,User body
+ ) throws NotFoundException;
+    public abstract Response testClientModel(Client body
  ) throws NotFoundException;
     public abstract Response testEndpointParameters(BigDecimal number
  ,Double _double
@@ -61,9 +68,20 @@ public abstract class FakeApiService {
  ,List<String> enumFormStringArray
  ,String enumFormString
  ) throws NotFoundException;
-    public abstract Response testInlineAdditionalProperties(String requestBody
+    public abstract Response testGroupParameters(Integer requiredStringGroup
+ ,Boolean requiredBooleanGroup
+ ,Long requiredInt64Group
+ ,Integer stringGroup
+ ,Boolean booleanGroup
+ ,Long int64Group
+ ) throws NotFoundException;
+    public abstract Response testInlineAdditionalProperties(Map<String, String> param
  ) throws NotFoundException;
     public abstract Response testJsonFormData(String param
  ,String param2
+ ) throws NotFoundException;
+    public abstract Response uploadFileWithRequiredFile(Long petId
+ ,InputStream requiredFileInputStream, FileInfo requiredFileDetail
+ ,String additionalMetadata
  ) throws NotFoundException;
 }

@@ -10,12 +10,12 @@ class UserApi {
   /// Create user
   ///
   /// This can only be done by the logged in user.
-  Future createUser(User user) async {
-    Object postBody = user;
+  Future createUser(User body) async {
+    Object postBody = body;
 
     // verify required params are set
-    if(user == null) {
-     throw new ApiException(400, "Missing required param: user");
+    if(body == null) {
+     throw new ApiException(400, "Missing required param: body");
     }
 
     // create path and map variables
@@ -50,7 +50,7 @@ class UserApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -59,12 +59,12 @@ class UserApi {
   /// Creates list of users with given input array
   ///
   /// 
-  Future createUsersWithArrayInput(List<User> user) async {
-    Object postBody = user;
+  Future createUsersWithArrayInput(List<User> body) async {
+    Object postBody = body;
 
     // verify required params are set
-    if(user == null) {
-     throw new ApiException(400, "Missing required param: user");
+    if(body == null) {
+     throw new ApiException(400, "Missing required param: body");
     }
 
     // create path and map variables
@@ -99,7 +99,7 @@ class UserApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -108,12 +108,12 @@ class UserApi {
   /// Creates list of users with given input array
   ///
   /// 
-  Future createUsersWithListInput(List<User> user) async {
-    Object postBody = user;
+  Future createUsersWithListInput(List<User> body) async {
+    Object postBody = body;
 
     // verify required params are set
-    if(user == null) {
-     throw new ApiException(400, "Missing required param: user");
+    if(body == null) {
+     throw new ApiException(400, "Missing required param: body");
     }
 
     // create path and map variables
@@ -148,7 +148,7 @@ class UserApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -197,7 +197,7 @@ class UserApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -246,9 +246,9 @@ class UserApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return apiClient.deserialize(response.body, 'User') as User;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'User') as User;
     } else {
       return null;
     }
@@ -301,9 +301,9 @@ class UserApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
-      return apiClient.deserialize(response.body, 'String') as String;
+      return apiClient.deserialize(_decodeBodyBytes(response), 'String') as String;
     } else {
       return null;
     }
@@ -348,7 +348,7 @@ class UserApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;
@@ -357,15 +357,15 @@ class UserApi {
   /// Updated user
   ///
   /// This can only be done by the logged in user.
-  Future updateUser(String username, User user) async {
-    Object postBody = user;
+  Future updateUser(String username, User body) async {
+    Object postBody = body;
 
     // verify required params are set
     if(username == null) {
      throw new ApiException(400, "Missing required param: username");
     }
-    if(user == null) {
-     throw new ApiException(400, "Missing required param: user");
+    if(body == null) {
+     throw new ApiException(400, "Missing required param: body");
     }
 
     // create path and map variables
@@ -400,7 +400,7 @@ class UserApi {
                                              authNames);
 
     if(response.statusCode >= 400) {
-      throw new ApiException(response.statusCode, response.body);
+      throw new ApiException(response.statusCode, _decodeBodyBytes(response));
     } else if(response.body != null) {
     } else {
       return;

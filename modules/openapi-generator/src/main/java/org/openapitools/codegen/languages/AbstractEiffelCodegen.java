@@ -17,37 +17,22 @@
 
 package org.openapitools.codegen.languages;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
-
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
-
 import org.apache.commons.lang3.StringUtils;
-import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenConfig;
-import org.openapitools.codegen.CodegenConstants;
-import org.openapitools.codegen.CodegenModel;
-import org.openapitools.codegen.CodegenOperation;
-import org.openapitools.codegen.CodegenParameter;
-import org.openapitools.codegen.CodegenProperty;
-import org.openapitools.codegen.DefaultCodegen;
+import org.openapitools.codegen.*;
 import org.openapitools.codegen.utils.ModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public abstract class AbstractEiffelCodegen extends DefaultCodegen implements CodegenConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractEiffelCodegen.class);
@@ -169,13 +154,13 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
     @Override
     public String toParamName(String name) {
         // params should be lowercase. E.g. "person: PERSON"
-        return toVarName(name).toLowerCase();
+        return toVarName(name).toLowerCase(Locale.ROOT);
     }
 
     @Override
     public String toModelName(String name) {
         // phone_number => PHONE_NUMBER
-        return toModelFilename(name).toUpperCase();
+        return toModelFilename(name).toUpperCase(Locale.ROOT);
     }
 
     @Override
@@ -221,7 +206,7 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
 
     @Override
     public String toApiTestFilename(String name) {
-        return toApiName(name).toLowerCase() + "_test";
+        return toApiName(name).toLowerCase(Locale.ROOT) + "_test";
     }
 
     @Override
@@ -229,7 +214,7 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
         if (name.length() == 0) {
             return "DEFAULT_API";
         }
-        return name.toUpperCase() + "_API";
+        return name.toUpperCase(Locale.ROOT) + "_API";
     }
 
     /**
@@ -269,7 +254,7 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
             }
         }
         if (!isNullOrEmpty(model.parentSchema)) {
-            model.parentSchema = model.parentSchema.toLowerCase();
+            model.parentSchema = model.parentSchema.toLowerCase(Locale.ROOT);
         }
     }
 
@@ -290,7 +275,7 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
             Schema inner = ap.getItems();
             return "LIST [" + getTypeDeclaration(inner) + "]";
         } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
+            Schema inner = ModelUtils.getAdditionalProperties(p);
 
             return getSchemaType(p) + "[" + getTypeDeclaration(inner) + "]";
         }
@@ -352,7 +337,7 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
         for (CodegenOperation operation : operations) {
             // http method verb conversion (e.g. PUT => Put)
 
-            operation.httpMethod = camelize(operation.httpMethod.toLowerCase());
+            operation.httpMethod = camelize(operation.httpMethod.toLowerCase(Locale.ROOT));
         }
 
         // remove model imports to avoid error
@@ -472,11 +457,12 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
     }
 
     @Override
-    public CodegenModel fromModel(String name, Schema model, Map<String, Schema> allDefinitions) {
-        CodegenModel codegenModel = super.fromModel(name, model, allDefinitions);
+    public CodegenModel fromModel(String name, Schema model) {
+        Map<String, Schema> allDefinitions = ModelUtils.getSchemas(this.openAPI);
+        CodegenModel codegenModel = super.fromModel(name, model);
         if (allDefinitions != null && codegenModel.parentSchema != null && codegenModel.hasEnums) {
             final Schema parentModel = allDefinitions.get(codegenModel.parentSchema);
-            final CodegenModel parentCodegenModel = super.fromModel(codegenModel.parent, parentModel, allDefinitions);
+            final CodegenModel parentCodegenModel = super.fromModel(codegenModel.parent, parentModel);
             codegenModel = AbstractEiffelCodegen.reconcileInlineEnums(codegenModel, parentCodegenModel);
         }
         return codegenModel;
@@ -557,7 +543,7 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
     @Override
     public String toInstantiationType(Schema p) {
         if (ModelUtils.isMapSchema(p)) {
-            Schema additionalProperties2 = (Schema) p.getAdditionalProperties();
+            Schema additionalProperties2 = ModelUtils.getAdditionalProperties(p);
             String type = additionalProperties2.getType();
             if (null == type) {
                 LOGGER.error("No Type defined for Additional Schema " + additionalProperties2 + "\n" //
@@ -575,7 +561,7 @@ public abstract class AbstractEiffelCodegen extends DefaultCodegen implements Co
     }
 
     public String unCamelize(String name) {
-        return name.replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase();
+        return name.replaceAll("(.)(\\p{Upper})", "$1_$2").toLowerCase(Locale.ROOT);
     }
 
     public String toEiffelFeatureStyle(String operationId) {

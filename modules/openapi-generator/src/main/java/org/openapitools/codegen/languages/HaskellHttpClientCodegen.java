@@ -22,6 +22,7 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -35,6 +36,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
+
 public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(HaskellHttpClientCodegen.class);
 
@@ -45,7 +49,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
     protected String defaultCabalVersion = "0.1.0.0";
     protected String modulePath = null;
 
-    protected Boolean useMonadLogger = false;
+    protected Boolean useKatip = true;
     protected Boolean allowNonUniqueOperationIds = false;
     protected Boolean genEnums = true;
 
@@ -67,7 +71,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
     public static final String PROP_MODEL_DERIVING = "modelDeriving";
     public static final String PROP_REQUEST_TYPE = "requestType";
     public static final String PROP_STRICT_FIELDS = "strictFields";
-    public static final String PROP_USE_MONAD_LOGGER = "useMonadLogger";
+    public static final String PROP_USE_KATIP = "useKatip";
 
     // protected String MODEL_IMPORTS = "modelImports";
     // protected String MODEL_EXTENSIONS = "modelExtensions";
@@ -105,7 +109,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
     static final String X_RETURN_TYPE = "x-returnType";
     static final String X_STRICT_FIELDS = "x-strictFields";
     static final String X_UNKNOWN_MIME_TYPES = "x-unknownMimeTypes";
-    static final String X_USE_MONAD_LOGGER = "x-useMonadLogger";
+    static final String X_USE_KATIP = "x-useKatip";
     static final String X_ALLOW_NONUNIQUE_OPERATION_IDS = "x-allowNonUniqueOperationIds";
     static final String X_NEWTYPE = "x-newtype";
     static final String X_ENUM = "x-enum";
@@ -256,7 +260,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
 
         cliOptions.add(CliOption.newString(PROP_MODEL_DERIVING, "Additional classes to include in the deriving() clause of Models"));
         cliOptions.add(CliOption.newBoolean(PROP_STRICT_FIELDS, "Add strictness annotations to all model fields").defaultValue((Boolean.TRUE.toString())));
-        cliOptions.add(CliOption.newBoolean(PROP_USE_MONAD_LOGGER, "Use the monad-logger package to provide logging (if false, use the katip logging package)").defaultValue((Boolean.FALSE.toString())));
+        cliOptions.add(CliOption.newBoolean(PROP_USE_KATIP, "Sets the default value for the UseKatip cabal flag. If true, the katip package provides logging instead of monad-logger").defaultValue((Boolean.TRUE.toString())));
 
         cliOptions.add(CliOption.newString(PROP_DATETIME_FORMAT, "format string used to parse/render a datetime"));
         cliOptions.add(CliOption.newString(PROP_DATE_FORMAT, "format string used to parse/render a date").defaultValue(defaultDateFormat));
@@ -339,9 +343,9 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         additionalProperties.put(X_STRICT_FIELDS, value);
     }
 
-    public void setUseMonadLogger(Boolean value) {
-        additionalProperties.put(X_USE_MONAD_LOGGER, value);
-        this.useMonadLogger = value;
+    public void setUseKatip(Boolean value) {
+        additionalProperties.put(X_USE_KATIP, value);
+        this.useKatip = value;
     }
 
     private void setStringProp(String key, String value) {
@@ -359,6 +363,10 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
     @Override
     public void processOpts() {
         super.processOpts();
+
+        if (StringUtils.isEmpty(System.getenv("HASKELL_POST_PROCESS_FILE"))) {
+            LOGGER.info("Hint: Environment variable HASKELL_POST_PROCESS_FILE not defined so the Haskell code may not be properly formatted. To define it, try 'export HASKELL_POST_PROCESS_FILE=\"$HOME/.local/bin/hfmt -w\"' (Linux/Mac)");
+        }
 
         if (additionalProperties.containsKey(PROP_ALLOW_FROMJSON_NULLS)) {
             setAllowFromJsonNulls(convertPropertyToBoolean(PROP_ALLOW_FROMJSON_NULLS));
@@ -431,10 +439,10 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         } else {
             setStrictFields(true);
         }
-        if (additionalProperties.containsKey(PROP_USE_MONAD_LOGGER)) {
-            setUseMonadLogger(convertPropertyToBoolean(PROP_USE_MONAD_LOGGER));
+        if (additionalProperties.containsKey(PROP_USE_KATIP)) {
+            setUseKatip(convertPropertyToBoolean(PROP_USE_KATIP));
         } else {
-            setUseMonadLogger(false);
+            setUseKatip(true);
         }
 
         if (additionalProperties.containsKey(PROP_CABAL_PACKAGE)) {
@@ -465,7 +473,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         } else {
             baseTitle = baseTitle.trim();
             // Drop any API suffix
-            if (baseTitle.toUpperCase().endsWith("API")) {
+            if (baseTitle.toUpperCase(Locale.ROOT).endsWith("API")) {
                 baseTitle = baseTitle.substring(0, baseTitle.length() - 3);
             }
         }
@@ -473,7 +481,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         if (!additionalProperties.containsKey(PROP_CABAL_PACKAGE)) {
             List<String> words = new ArrayList<>();
             for (String word : baseTitle.split(" ")) {
-                words.add(word.toLowerCase());
+                words.add(word.toLowerCase(Locale.ROOT));
             }
             setCabalPackage(StringUtils.join(words, "-"));
         }
@@ -516,7 +524,9 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         supportingFiles.add(new SupportingFile("MimeTypes.mustache", modulePath, "MimeTypes.hs"));
 
         // logger
-        supportingFiles.add(new SupportingFile(useMonadLogger ? "LoggingMonadLogger.mustache" : "LoggingKatip.mustache", modulePath, "Logging.hs"));
+        supportingFiles.add(new SupportingFile("Logging.mustache", modulePath, "Logging.hs"));
+        supportingFiles.add(new SupportingFile("LoggingMonadLogger.mustache", modulePath, "LoggingMonadLogger.hs"));
+        supportingFiles.add(new SupportingFile("LoggingKatip.mustache", modulePath, "LoggingKatip.hs"));
 
         apiTemplateFiles.put("API.mustache", ".hs");
         // modelTemplateFiles.put("Model.mustache", ".hs");
@@ -548,7 +558,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
             Schema inner = ap.getItems();
             return "[" + getTypeDeclaration(inner) + "]";
         } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
+            Schema inner = ModelUtils.getAdditionalProperties(p);
             return "(Map.Map String " + getTypeDeclaration(inner) + ")";
         }
         return super.getTypeDeclaration(p);
@@ -570,7 +580,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
     @Override
     public String toInstantiationType(Schema p) {
         if (ModelUtils.isMapSchema(p)) {
-            Schema additionalProperties2 = (Schema) p.getAdditionalProperties();
+            Schema additionalProperties2 = ModelUtils.getAdditionalProperties(p);
             String type = additionalProperties2.getType();
             if (null == type) {
                 LOGGER.error("No Type defined for Additional Schema " + additionalProperties2 + "\n" //
@@ -615,9 +625,9 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
             LOGGER.warn("generated unique operationId `" + uniqueName + "`");
         }
         op.operationId = uniqueName;
-        op.operationIdLowerCase = uniqueName.toLowerCase();
-        op.operationIdCamelCase = DefaultCodegen.camelize(uniqueName);
-        op.operationIdSnakeCase = DefaultCodegen.underscore(uniqueName);
+        op.operationIdLowerCase = uniqueName.toLowerCase(Locale.ROOT);
+        op.operationIdCamelCase = camelize(uniqueName);
+        op.operationIdSnakeCase = underscore(uniqueName);
         opList.add(op);
         op.baseName = tag;
 
@@ -628,7 +638,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         op.vendorExtensions.put(X_OPERATION_TYPE, operationType);
         typeNames.add(operationType);
 
-        op.vendorExtensions.put(X_HADDOCK_PATH, String.format("%s %s", op.httpMethod, op.path.replace("/", "\\/")));
+        op.vendorExtensions.put(X_HADDOCK_PATH, String.format(Locale.ROOT, "%s %s", op.httpMethod, op.path.replace("/", "\\/")));
         op.vendorExtensions.put(X_HAS_BODY_OR_FORM_PARAM, op.getHasBodyParam() || op.getHasFormParams());
 
         for (CodegenParameter param : op.allParams) {
@@ -747,8 +757,8 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
     }
 
     @Override
-    public CodegenModel fromModel(String name, Schema mod, Map<String, Schema> allDefinitions) {
-        CodegenModel model = super.fromModel(name, mod, allDefinitions);
+    public CodegenModel fromModel(String name, Schema mod) {
+        CodegenModel model = super.fromModel(name, mod);
 
 //        while (typeNames.contains(model.classname)) {
 //            model.classname = generateNextName(model.classname);
@@ -885,7 +895,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         if (appendDataType
                 && uniqueParamNameTypes.containsKey(paramNameType)
                 && !isDuplicate(paramNameType, dataType)) {
-            paramNameType = paramNameType + dataType;
+            paramNameType = toTypeName("", paramNameType + dataType);
         }
 
         while (typeNames.contains(paramNameType)) {
@@ -1003,9 +1013,9 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         if (word.length() == 0) {
             return word;
         } else if (word.length() == 1) {
-            return word.substring(0, 1).toUpperCase();
+            return word.substring(0, 1).toUpperCase(Locale.ROOT);
         } else {
-            return word.substring(0, 1).toUpperCase() + word.substring(1);
+            return word.substring(0, 1).toUpperCase(Locale.ROOT) + word.substring(1);
         }
     }
 
@@ -1013,9 +1023,9 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         if (word.length() == 0) {
             return word;
         } else if (word.length() == 1) {
-            return word.substring(0, 1).toLowerCase();
+            return word.substring(0, 1).toLowerCase(Locale.ROOT);
         } else {
-            return word.substring(0, 1).toLowerCase() + word.substring(1);
+            return word.substring(0, 1).toLowerCase(Locale.ROOT) + word.substring(1);
         }
     }
 
@@ -1303,7 +1313,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
         }
 
         // number
-        if (num.contains(datatype.toLowerCase())) {
+        if (num.contains(datatype.toLowerCase(Locale.ROOT))) {
             String varName = "Num" + value;
             varName = varName.replaceAll("-", "Minus_");
             varName = varName.replaceAll("\\+", "Plus_");
@@ -1317,7 +1327,7 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
     @Override
     public String toEnumValue(String value, String datatype) {
         List<String> num = new ArrayList<>(Arrays.asList("integer", "int", "double", "long", "float"));
-        if (num.contains(datatype.toLowerCase())) {
+        if (num.contains(datatype.toLowerCase(Locale.ROOT))) {
             return value;
         } else {
             return "\"" + escapeText(value) + "\"";
@@ -1343,5 +1353,32 @@ public class HaskellHttpClientCodegen extends DefaultCodegen implements CodegenC
                         .replaceAll("[\\t\\n\\r]", " ")
                         .replace("\\", "\\\\")
                         .replace("\"", "\\\""));
+    }
+
+    @Override
+    public void postProcessFile(File file, String fileType) {
+        if (file == null) {
+            return;
+        }
+        String haskellPostProcessFile = System.getenv("HASKELL_POST_PROCESS_FILE");
+        if (StringUtils.isEmpty(haskellPostProcessFile)) {
+            return; // skip if HASKELL_POST_PROCESS_FILE env variable is not defined
+        }
+
+        // only process files with hs extension
+        if ("hs".equals(FilenameUtils.getExtension(file.toString()))) {
+            String command = haskellPostProcessFile + " " + file.toString();
+            try {
+                Process p = Runtime.getRuntime().exec(command);
+                int exitValue = p.waitFor();
+                if (exitValue != 0) {
+                    LOGGER.error("Error running the command ({}). Exit value: {}", command, exitValue);
+                } else {
+                    LOGGER.info("Successfully executed: " + command);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error running the command ({}). Exception: {}", command, e.getMessage());
+            }
+        }
     }
 }

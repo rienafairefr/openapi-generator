@@ -17,52 +17,27 @@
 
 package org.openapitools.codegen.languages;
 
-import org.apache.commons.lang3.StringUtils;
-import org.openapitools.codegen.*;
-import org.openapitools.codegen.utils.ModelUtils;
-
-import io.swagger.v3.oas.models.media.*;
-import io.swagger.v3.parser.util.SchemaTypeUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.openapitools.codegen.CodegenConfig;
+import org.openapitools.codegen.CodegenType;
+import org.openapitools.codegen.SupportingFile;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
-public class CppQt5QHttpEngineServerCodegen extends AbstractCppCodegen implements CodegenConfig {
-    @SuppressWarnings("unused")
-    private static final Logger LOGGER = LoggerFactory.getLogger(CppQt5QHttpEngineServerCodegen.class);
+public class CppQt5QHttpEngineServerCodegen extends CppQt5AbstractCodegen implements CodegenConfig {
 
-    public static final String CPP_NAMESPACE = "cppNamespace";
-    public static final String CPP_NAMESPACE_DESC = "C++ namespace (convention: name::space::for::api).";
-
-    protected final String PREFIX = "OAI";
     protected final String SRC_DIR = "/src";
     protected final String MODEL_DIR = "/src/models";
     protected final String APIHANDLER_DIR = "/src/handlers";
     protected final String APIREQUEST_DIR = "/src/requests";
-    protected Set<String> foundationClasses = new HashSet<String>();
+
     // source folder where to write the files
     protected String sourceFolder = "server";
-    protected String apiVersion = "1.0.0";
-    protected Map<String, String> namespaces = new HashMap<String, String>();
-    protected Set<String> systemIncludes = new HashSet<String>();
-    protected String cppNamespace = "OpenAPI";
 
     public CppQt5QHttpEngineServerCodegen() {
         super();
 
         // set the output folder here
         outputFolder = "generated-code/cpp-qt5-qhttpengine-server";
-
-        // set modelNamePrefix as default for QHttpEngine Server
-        if (StringUtils.isEmpty(modelNamePrefix)) {
-            modelNamePrefix = PREFIX;
-        }
 
         /*
          * Models.  You can write model files using the modelTemplateFiles map.
@@ -104,35 +79,7 @@ public class CppQt5QHttpEngineServerCodegen extends AbstractCppCodegen implement
          * will use the resource stream to attempt to read the templates.
          */
         embeddedTemplateDir = templateDir = "cpp-qt5-qhttpengine-server";
-
-        // CLI options
-        addOption(CPP_NAMESPACE, CPP_NAMESPACE_DESC, this.cppNamespace);
-
-        /*
-         * Additional Properties.  These values can be passed to the templates and
-         * are available in models, apis, and supporting files
-         */
-        additionalProperties.put("apiVersion", apiVersion);
-        additionalProperties().put("prefix", PREFIX);
-
-        // Write defaults namespace in properties so that it can be accessible in templates.
-        // At this point command line has not been parsed so if value is given
-        // in command line it will superseed this content
-        additionalProperties.put("cppNamespace", cppNamespace);
-
-        /*
-         * Language Specific Primitives.  These types will not trigger imports by
-         * the client generator
-         */
-        languageSpecificPrimitives = new HashSet<String>(
-                Arrays.asList(
-                        "bool",
-                        "qint32",
-                        "qint64",
-                        "float",
-                        "double")
-        );
-
+      
         supportingFiles.add(new SupportingFile("helpers-header.mustache", sourceFolder + MODEL_DIR, PREFIX + "Helpers.h"));
         supportingFiles.add(new SupportingFile("helpers-body.mustache", sourceFolder + MODEL_DIR, PREFIX + "Helpers.cpp"));
         supportingFiles.add(new SupportingFile("object.mustache", sourceFolder + MODEL_DIR, PREFIX + "Object.h"));        
@@ -148,49 +95,12 @@ public class CppQt5QHttpEngineServerCodegen extends AbstractCppCodegen implement
         supportingFiles.add(new SupportingFile("Dockerfile.mustache", sourceFolder, "Dockerfile"));
         supportingFiles.add(new SupportingFile("LICENSE.txt.mustache", sourceFolder, "LICENSE.txt"));
 
-        super.typeMapping = new HashMap<String, String>();
-
-        typeMapping.put("date", "QDate");
-        typeMapping.put("DateTime", "QDateTime");
-        typeMapping.put("string", "QString");
-        typeMapping.put("integer", "qint32");
-        typeMapping.put("long", "qint64");
-        typeMapping.put("boolean", "bool");
-        typeMapping.put("array", "QList");
-        typeMapping.put("map", "QMap");
-        typeMapping.put("object", PREFIX + "Object");
-        // mapped as "file" type for OAS 3.0
-        typeMapping.put("ByteArray", "QByteArray");
-        //   UUID support - possible enhancement : use QUuid instead of QString.
-        //   beware though that Serialisation/deserialisation of QUuid does not
-        //   come out of the box and will need to be sorted out (at least imply
-        //   modifications on multiple templates)
-        typeMapping.put("UUID", "QString");
-        typeMapping.put("file", "QIODevice");
-        typeMapping.put("binary", "QIODevice");
-        importMapping = new HashMap<String, String>();
-        namespaces = new HashMap<String, String>();
-
-        foundationClasses.add("QString");
-
-        systemIncludes.add("QString");
-        systemIncludes.add("QList");
-        systemIncludes.add("QMap");
-        systemIncludes.add("QDate");
-        systemIncludes.add("QDateTime");
-        systemIncludes.add("QByteArray");
-        systemIncludes.add("QIODevice");
     }
 
     @Override
     public void processOpts() {
         super.processOpts();
 
-        if (additionalProperties.containsKey("cppNamespace")) {
-            cppNamespace = (String) additionalProperties.get("cppNamespace");
-        }
-
-        additionalProperties.put("cppNamespaceDeclarations", cppNamespace.split("\\::"));
         if (additionalProperties.containsKey("modelNamePrefix")) {
             supportingFiles.clear();
             supportingFiles.add(new SupportingFile("helpers-header.mustache", sourceFolder + MODEL_DIR, modelNamePrefix + "Helpers.h"));
@@ -206,9 +116,6 @@ public class CppQt5QHttpEngineServerCodegen extends AbstractCppCodegen implement
             supportingFiles.add(new SupportingFile("CMakeLists.txt.mustache", sourceFolder, "CMakeLists.txt"));
             supportingFiles.add(new SupportingFile("Dockerfile.mustache", sourceFolder, "Dockerfile"));
             supportingFiles.add(new SupportingFile("LICENSE.txt.mustache", sourceFolder, "LICENSE.txt"));
-
-            typeMapping.put("object", modelNamePrefix + "Object");
-            additionalProperties().put("prefix", modelNamePrefix);
         }
     }
 
@@ -242,26 +149,7 @@ public class CppQt5QHttpEngineServerCodegen extends AbstractCppCodegen implement
      */
     @Override
     public String getHelp() {
-        return "Generates a Qt5 C++ Server (beta) using the QHTTPEngine HTTP Library.";
-    }
-
-    @Override
-    public String toModelImport(String name) {
-        if( name.isEmpty() ) {
-            return null;
-        }
-
-        if (namespaces.containsKey(name)) {
-            return "using " + namespaces.get(name) + ";";
-        } else if (systemIncludes.contains(name)) {
-            return "#include <" + name + ">";
-        }
-
-        String folder = modelPackage().replace("::", File.separator);
-        if (!folder.isEmpty())
-            folder += File.separator;
-
-        return "#include \"" + folder + name + ".h\"";
+        return "Generates a Qt5 C++ Server using the QHTTPEngine HTTP Library.";
     }
    
     /**
@@ -287,11 +175,6 @@ public class CppQt5QHttpEngineServerCodegen extends AbstractCppCodegen implement
     }
     
     @Override
-    public String toModelFilename(String name) {
-        return modelNamePrefix + initialCaps(name);
-    }
-
-    @Override
     public String apiFilename(String templateName, String tag) {
         String result = super.apiFilename(templateName, tag);
 
@@ -304,131 +187,7 @@ public class CppQt5QHttpEngineServerCodegen extends AbstractCppCodegen implement
 
     @Override
     public String toApiFilename(String name) {
-        return modelNamePrefix + initialCaps(name) + "ApiHandler";
+        return modelNamePrefix + sanitizeName(initialCaps(name)) + "ApiHandler";
     }
 
-    /**
-     * Optional - type declaration.  This is a String which is used by the templates to instantiate your
-     * types.  There is typically special handling for different property types
-     *
-     * @return a string value used as the `dataType` field for model templates, `returnType` for api templates
-     */
-    @Override
-    @SuppressWarnings("rawtypes")
-    public String getTypeDeclaration(Schema p) {
-        String openAPIType = getSchemaType(p);
-
-        if (ModelUtils.isArraySchema(p)) {
-            ArraySchema ap = (ArraySchema) p;
-            Schema inner = ap.getItems();
-            return getSchemaType(p) + "<" + getTypeDeclaration(inner) + ">";
-        } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
-            return getSchemaType(p) + "<QString, " + getTypeDeclaration(inner) + ">";
-        } else if (ModelUtils.isBinarySchema(p)) {
-            return getSchemaType(p) + "*";
-        } else if (ModelUtils.isFileSchema(p)) {
-            return getSchemaType(p) + "*";
-        }
-        if (foundationClasses.contains(openAPIType)) {
-            return openAPIType;
-        } else if (languageSpecificPrimitives.contains(openAPIType)) {
-            return toModelName(openAPIType);
-        } else {
-            return openAPIType;
-        }
-    }
-
-    @Override
-    @SuppressWarnings("rawtypes")    
-    public String toDefaultValue(Schema p) {
-        if (ModelUtils.isBooleanSchema(p)) {
-            return "false";
-        } else if (ModelUtils.isDateSchema(p)) {
-            return "NULL";
-        } else if (ModelUtils.isDateTimeSchema(p)) {
-            return "NULL";
-        } else if (ModelUtils.isNumberSchema(p)) {
-            if (SchemaTypeUtil.FLOAT_FORMAT.equals(p.getFormat())) {
-                return "0.0f";
-            }
-            return "0.0";
-        } else if (ModelUtils.isIntegerSchema(p)) {
-            if (SchemaTypeUtil.INTEGER64_FORMAT.equals(p.getFormat())) {
-                return "0L";
-            }
-            return "0";
-        } else if (ModelUtils.isMapSchema(p)) {
-            Schema inner = (Schema) p.getAdditionalProperties();
-            return "QMap<QString, " + getTypeDeclaration(inner) + ">()";
-        } else if (ModelUtils.isArraySchema(p)) {
-            ArraySchema ap = (ArraySchema) p;
-            Schema inner = ap.getItems();
-            return "QList<" + getTypeDeclaration(inner) + ">()";
-        } else if (ModelUtils.isStringSchema(p)) {
-            return "QString(\"\")";
-        } else if (!StringUtils.isEmpty(p.get$ref())) {
-            return toModelName(ModelUtils.getSimpleRef(p.get$ref())) + "()";
-        }
-        return "NULL";
-    }
-
-    /**
-     * Optional - OpenAPI type conversion.  This is used to map OpenAPI types in a `Schema` into
-     * either language specific types via `typeMapping` or into complex models if there is not a mapping.
-     *
-     * @return a string value of the type or complex model for this property
-     */
-    @Override
-    @SuppressWarnings("rawtypes")    
-    public String getSchemaType(Schema p) {
-        String openAPIType = super.getSchemaType(p);
-
-        String type = null;
-        if (typeMapping.containsKey(openAPIType)) {
-            type = typeMapping.get(openAPIType);
-            if (languageSpecificPrimitives.contains(type)) {
-                return toModelName(type);
-            }
-            if (foundationClasses.contains(type)) {
-                return type;
-            }
-        } else {
-            type = openAPIType;
-        }
-        return toModelName(type);
-    }
-
-    @Override
-    public String toVarName(String name) {
-        // sanitize name
-        String varName = name;
-        varName = sanitizeName(name); 
-
-        // if it's all uppper case, convert to lower case
-        if (varName.matches("^[A-Z_]*$")) {
-            varName = varName.toLowerCase();
-        }
-
-        // camelize (lower first character) the variable name
-        // petId => pet_id
-        varName = underscore(varName);
-
-        // for reserved word or word starting with number, append _
-        if (isReservedWord(varName) || varName.matches("^\\d.*")) {
-            varName = escapeReservedWord(varName);
-        }
-
-        return varName;
-    }
-
-    @Override
-    public String toParamName(String name) {
-        return toVarName(name);
-    }
-
-    @Override
-    public String getTypeDeclaration(String str) {
-        return str;
-    }
 }

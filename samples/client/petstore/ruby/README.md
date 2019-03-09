@@ -55,11 +55,11 @@ Please follow the [installation](#installation) procedure and then run the follo
 require 'petstore'
 
 api_instance = Petstore::AnotherFakeApi.new
-client = Petstore::Client.new # Client | client model
+body = Petstore::Client.new # Client | client model
 
 begin
   #To test special tags
-  result = api_instance.call_123_test_special_tags(client)
+  result = api_instance.call_123_test_special_tags(body)
   p result
 rescue Petstore::ApiError => e
   puts "Exception when calling AnotherFakeApi->call_123_test_special_tags: #{e}"
@@ -74,6 +74,7 @@ All URIs are relative to *http://petstore.swagger.io:80/v2*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *Petstore::AnotherFakeApi* | [**call_123_test_special_tags**](docs/AnotherFakeApi.md#call_123_test_special_tags) | **PATCH** /another-fake/dummy | To test special tags
+*Petstore::FakeApi* | [**create_xml_item**](docs/FakeApi.md#create_xml_item) | **POST** /fake/create_xml_item | creates an XmlItem
 *Petstore::FakeApi* | [**fake_outer_boolean_serialize**](docs/FakeApi.md#fake_outer_boolean_serialize) | **POST** /fake/outer/boolean | 
 *Petstore::FakeApi* | [**fake_outer_composite_serialize**](docs/FakeApi.md#fake_outer_composite_serialize) | **POST** /fake/outer/composite | 
 *Petstore::FakeApi* | [**fake_outer_number_serialize**](docs/FakeApi.md#fake_outer_number_serialize) | **POST** /fake/outer/number | 
@@ -83,6 +84,7 @@ Class | Method | HTTP request | Description
 *Petstore::FakeApi* | [**test_client_model**](docs/FakeApi.md#test_client_model) | **PATCH** /fake | To test \"client\" model
 *Petstore::FakeApi* | [**test_endpoint_parameters**](docs/FakeApi.md#test_endpoint_parameters) | **POST** /fake | Fake endpoint for testing various parameters 假端點 偽のエンドポイント 가짜 엔드 포인트 
 *Petstore::FakeApi* | [**test_enum_parameters**](docs/FakeApi.md#test_enum_parameters) | **GET** /fake | To test enum parameters
+*Petstore::FakeApi* | [**test_group_parameters**](docs/FakeApi.md#test_group_parameters) | **DELETE** /fake | Fake endpoint to test group parameters (optional)
 *Petstore::FakeApi* | [**test_inline_additional_properties**](docs/FakeApi.md#test_inline_additional_properties) | **POST** /fake/inline-additionalProperties | test inline additionalProperties
 *Petstore::FakeApi* | [**test_json_form_data**](docs/FakeApi.md#test_json_form_data) | **GET** /fake/jsonFormData | test json serialization of form data
 *Petstore::FakeClassnameTags123Api* | [**test_classname**](docs/FakeClassnameTags123Api.md#test_classname) | **PATCH** /fake_classname_test | To test class name in snake case
@@ -113,7 +115,6 @@ Class | Method | HTTP request | Description
 
  - [Petstore::AdditionalPropertiesClass](docs/AdditionalPropertiesClass.md)
  - [Petstore::Animal](docs/Animal.md)
- - [Petstore::AnimalFarm](docs/AnimalFarm.md)
  - [Petstore::ApiResponse](docs/ApiResponse.md)
  - [Petstore::ArrayOfArrayOfNumberOnly](docs/ArrayOfArrayOfNumberOnly.md)
  - [Petstore::ArrayOfNumberOnly](docs/ArrayOfNumberOnly.md)
@@ -144,9 +145,11 @@ Class | Method | HTTP request | Description
  - [Petstore::Pet](docs/Pet.md)
  - [Petstore::ReadOnlyFirst](docs/ReadOnlyFirst.md)
  - [Petstore::SpecialModelName](docs/SpecialModelName.md)
- - [Petstore::StringBooleanMap](docs/StringBooleanMap.md)
  - [Petstore::Tag](docs/Tag.md)
+ - [Petstore::TypeHolderDefault](docs/TypeHolderDefault.md)
+ - [Petstore::TypeHolderExample](docs/TypeHolderExample.md)
  - [Petstore::User](docs/User.md)
+ - [Petstore::XmlItem](docs/XmlItem.md)
 
 
 ## Documentation for Authorization

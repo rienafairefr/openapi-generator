@@ -65,18 +65,46 @@ class PetApi
     protected $headerSelector;
 
     /**
+     * @var int Host index
+     */
+    protected $hostIndex;
+
+    /**
      * @param ClientInterface $client
      * @param Configuration   $config
      * @param HeaderSelector  $selector
+     * @param int             $host_index (Optional) host index to select the list of hosts if defined in the OpenAPI spec
      */
     public function __construct(
         ClientInterface $client = null,
         Configuration $config = null,
-        HeaderSelector $selector = null
+        HeaderSelector $selector = null,
+        $host_index = 0
     ) {
         $this->client = $client ?: new Client();
         $this->config = $config ?: new Configuration();
         $this->headerSelector = $selector ?: new HeaderSelector();
+        $this->hostIndex = $host_index;
+    }
+
+    /**
+     * Set the host index
+     *
+     * @param  int Host index (required)
+     */
+    public function setHostIndex($host_index)
+    {
+        $this->hostIndex = $host_index;
+    }
+
+    /**
+     * Get the host index
+     *
+     * @return Host index
+     */
+    public function getHostIndex()
+    {
+        return $this->hostIndex;
     }
 
     /**
@@ -91,6 +119,10 @@ class PetApi
      * Operation addPet
      *
      * Add a new pet to the store
+     *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
      *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
@@ -107,6 +139,10 @@ class PetApi
      * Operation addPetWithHttpInfo
      *
      * Add a new pet to the store
+     *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
      *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
@@ -160,6 +196,10 @@ class PetApi
      *
      * Add a new pet to the store
      *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
+     *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
      * @throws \InvalidArgumentException
@@ -179,6 +219,10 @@ class PetApi
      * Operation addPetAsyncWithHttpInfo
      *
      * Add a new pet to the store
+     *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
      *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
@@ -215,6 +259,10 @@ class PetApi
 
     /**
      * Create request for operation 'addPet'
+     *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
      *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
@@ -259,10 +307,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -301,10 +349,16 @@ class PetApi
             $headers
         );
 
+        $operationHosts = ["http://petstore.swagger.io/v2", "http://path-server-test.petstore.local/v2"];
+        if ($this->hostIndex < 0 || $this->hostIndex >= sizeof($operationHosts)) {
+            throw new \InvalidArgumentException("Invalid index {$this->hostIndex} when selecting the host. Must be less than ".sizeof($operationHosts));
+        }
+        $operationHost = $operationHosts[$this->hostIndex];
+
         $query = \GuzzleHttp\Psr7\build_query($queryParams);
         return new Request(
             'POST',
-            $this->config->getHost() . $resourcePath . ($query ? "?{$query}" : ''),
+            $operationHost . $resourcePath . ($query ? "?{$query}" : ''),
             $headers,
             $httpBody
         );
@@ -496,10 +550,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -614,9 +668,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\Pet[]' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -632,9 +683,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -702,9 +750,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -780,10 +825,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -898,9 +943,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\Pet[]' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -916,9 +958,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -986,9 +1025,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -1064,10 +1100,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -1182,9 +1218,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\Pet' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -1200,9 +1233,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -1270,9 +1300,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -1349,10 +1376,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -1406,6 +1433,10 @@ class PetApi
      *
      * Update an existing pet
      *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
+     *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
      * @throws \OpenAPI\Client\ApiException on non-2xx response
@@ -1421,6 +1452,10 @@ class PetApi
      * Operation updatePetWithHttpInfo
      *
      * Update an existing pet
+     *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
      *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
@@ -1474,6 +1509,10 @@ class PetApi
      *
      * Update an existing pet
      *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
+     *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
      * @throws \InvalidArgumentException
@@ -1493,6 +1532,10 @@ class PetApi
      * Operation updatePetAsyncWithHttpInfo
      *
      * Update an existing pet
+     *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
      *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
@@ -1529,6 +1572,10 @@ class PetApi
 
     /**
      * Create request for operation 'updatePet'
+     *
+     * This oepration contains host(s) defined in the OpenAP spec. Use 'hostIndex' to select the host.
+     * URL: http://petstore.swagger.io/v2
+     * URL: http://path-server-test.petstore.local/v2
      *
      * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
      *
@@ -1573,10 +1620,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -1615,10 +1662,16 @@ class PetApi
             $headers
         );
 
+        $operationHosts = ["http://petstore.swagger.io/v2", "http://path-server-test.petstore.local/v2"];
+        if ($this->hostIndex < 0 || $this->hostIndex >= sizeof($operationHosts)) {
+            throw new \InvalidArgumentException("Invalid index {$this->hostIndex} when selecting the host. Must be less than ".sizeof($operationHosts));
+        }
+        $operationHost = $operationHosts[$this->hostIndex];
+
         $query = \GuzzleHttp\Psr7\build_query($queryParams);
         return new Request(
             'PUT',
-            $this->config->getHost() . $resourcePath . ($query ? "?{$query}" : ''),
+            $operationHost . $resourcePath . ($query ? "?{$query}" : ''),
             $headers,
             $httpBody
         );
@@ -1819,10 +1872,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -1941,9 +1994,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\ApiResponse' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -1959,9 +2009,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -2033,9 +2080,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -2123,10 +2167,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -2245,9 +2289,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\ApiResponse' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -2263,9 +2304,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -2337,9 +2375,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -2433,10 +2468,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {

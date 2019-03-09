@@ -21,11 +21,14 @@ import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.CodegenConstants;
 import org.openapitools.codegen.CodegenType;
 import org.openapitools.codegen.SupportingFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class GoClientCodegen extends AbstractGoCodegen {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GoClientCodegen.class);
 
     protected String packageVersion = "1.0.0";
     protected String apiDocPath = "docs/";

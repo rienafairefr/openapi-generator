@@ -16,29 +16,30 @@ Method | HTTP request | Description
 
 
 # **add_pet**
-> add_pet(pet)
+> add_pet(body)
 
 Add a new pet to the store
 
 ### Example
+
+* OAuth Authentication (petstore_auth):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure OAuth2 access token for authorization: petstore_auth
 configuration = petstore_api.Configuration()
+# Configure OAuth2 access token for authorization: petstore_auth
 configuration.access_token = 'YOUR_ACCESS_TOKEN'
 
 # create an instance of the API class
 api_instance = petstore_api.PetApi(petstore_api.ApiClient(configuration))
-pet = petstore_api.Pet() # Pet | Pet object that needs to be added to the store
+body = petstore_api.Pet() # Pet | Pet object that needs to be added to the store
 
 try:
     # Add a new pet to the store
-    api_instance.add_pet(pet)
+    api_instance.add_pet(body)
 except ApiException as e:
     print("Exception when calling PetApi->add_pet: %s\n" % e)
 ```
@@ -47,7 +48,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **pet** | [**Pet**](Pet.md)| Pet object that needs to be added to the store | 
+ **body** | [**Pet**](Pet.md)| Pet object that needs to be added to the store | 
 
 ### Return type
 
@@ -70,15 +71,16 @@ void (empty response body)
 Deletes a pet
 
 ### Example
+
+* OAuth Authentication (petstore_auth):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure OAuth2 access token for authorization: petstore_auth
 configuration = petstore_api.Configuration()
+# Configure OAuth2 access token for authorization: petstore_auth
 configuration.access_token = 'YOUR_ACCESS_TOKEN'
 
 # create an instance of the API class
@@ -123,15 +125,16 @@ Finds Pets by status
 Multiple status values can be provided with comma separated strings
 
 ### Example
+
+* OAuth Authentication (petstore_auth):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure OAuth2 access token for authorization: petstore_auth
 configuration = petstore_api.Configuration()
+# Configure OAuth2 access token for authorization: petstore_auth
 configuration.access_token = 'YOUR_ACCESS_TOKEN'
 
 # create an instance of the API class
@@ -175,15 +178,16 @@ Finds Pets by tags
 Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.
 
 ### Example
+
+* OAuth Authentication (petstore_auth):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure OAuth2 access token for authorization: petstore_auth
 configuration = petstore_api.Configuration()
+# Configure OAuth2 access token for authorization: petstore_auth
 configuration.access_token = 'YOUR_ACCESS_TOKEN'
 
 # create an instance of the API class
@@ -227,15 +231,16 @@ Find pet by ID
 Returns a single pet
 
 ### Example
+
+* Api Key Authentication (api_key):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure API key authorization: api_key
 configuration = petstore_api.Configuration()
+# Configure API key authorization: api_key
 configuration.api_key['api_key'] = 'YOUR_API_KEY'
 # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
 # configuration.api_key_prefix['api_key'] = 'Bearer'
@@ -274,29 +279,30 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **update_pet**
-> update_pet(pet)
+> update_pet(body)
 
 Update an existing pet
 
 ### Example
+
+* OAuth Authentication (petstore_auth):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure OAuth2 access token for authorization: petstore_auth
 configuration = petstore_api.Configuration()
+# Configure OAuth2 access token for authorization: petstore_auth
 configuration.access_token = 'YOUR_ACCESS_TOKEN'
 
 # create an instance of the API class
 api_instance = petstore_api.PetApi(petstore_api.ApiClient(configuration))
-pet = petstore_api.Pet() # Pet | Pet object that needs to be added to the store
+body = petstore_api.Pet() # Pet | Pet object that needs to be added to the store
 
 try:
     # Update an existing pet
-    api_instance.update_pet(pet)
+    api_instance.update_pet(body)
 except ApiException as e:
     print("Exception when calling PetApi->update_pet: %s\n" % e)
 ```
@@ -305,7 +311,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **pet** | [**Pet**](Pet.md)| Pet object that needs to be added to the store | 
+ **body** | [**Pet**](Pet.md)| Pet object that needs to be added to the store | 
 
 ### Return type
 
@@ -328,15 +334,16 @@ void (empty response body)
 Updates a pet in the store with form data
 
 ### Example
+
+* OAuth Authentication (petstore_auth):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure OAuth2 access token for authorization: petstore_auth
 configuration = petstore_api.Configuration()
+# Configure OAuth2 access token for authorization: petstore_auth
 configuration.access_token = 'YOUR_ACCESS_TOKEN'
 
 # create an instance of the API class
@@ -381,15 +388,16 @@ void (empty response body)
 uploads an image
 
 ### Example
+
+* OAuth Authentication (petstore_auth):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure OAuth2 access token for authorization: petstore_auth
 configuration = petstore_api.Configuration()
+# Configure OAuth2 access token for authorization: petstore_auth
 configuration.access_token = 'YOUR_ACCESS_TOKEN'
 
 # create an instance of the API class
@@ -435,15 +443,16 @@ Name | Type | Description  | Notes
 uploads an image (required)
 
 ### Example
+
+* OAuth Authentication (petstore_auth):
 ```python
 from __future__ import print_function
 import time
 import petstore_api
 from petstore_api.rest import ApiException
 from pprint import pprint
-
-# Configure OAuth2 access token for authorization: petstore_auth
 configuration = petstore_api.Configuration()
+# Configure OAuth2 access token for authorization: petstore_auth
 configuration.access_token = 'YOUR_ACCESS_TOKEN'
 
 # create an instance of the API class

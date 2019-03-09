@@ -2,7 +2,7 @@
 
 The library in `lib` provides auto-generated-from-OpenAPI [http-client](https://www.stackage.org/lts-10.0/package/http-client-0.5.7.1) bindings to the OpenAPI Petstore API.
 
-OpenApi Version: 3.0.0
+OpenApi Version: 3.0.1
 
 ## Installation
 
@@ -73,7 +73,7 @@ These options allow some customization of the code generation process.
 | modelDeriving                   | Additional classes to include in the deriving() clause of Models                                                              |          |                    |
 | requestType                     | Set the name of the type used to generate requests                                                                            |          | OpenAPIPetstoreRequest                     |
 | strictFields                    | Add strictness annotations to all model fields                                                                                | true     | true                  |
-| useMonadLogger                  | Use the monad-logger package to provide logging (if instead false, use the katip logging package)                             | false    | false                |
+| useKatip                        | Sets the default value for the UseKatip cabal flag. If true, the katip package provides logging instead of monad-logger       | true     | true                      |
 
 [1]: https://www.stackage.org/haddock/lts-9.0/iso8601-time-0.1.4/Data-Time-ISO8601.html#v:formatISO8601Millis
 

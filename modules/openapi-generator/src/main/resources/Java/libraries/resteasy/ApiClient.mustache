@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
@@ -41,7 +42,9 @@ import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import {{invokerPackage}}.auth.Authentication;
 import {{invokerPackage}}.auth.HttpBasicAuth;
 import {{invokerPackage}}.auth.ApiKeyAuth;
+{{#hasOAuthMethods}}
 import {{invokerPackage}}.auth.OAuth;
+{{/hasOAuthMethods}}
 
 {{>generatedAnnotation}}
 public class ApiClient {
@@ -64,7 +67,7 @@ public class ApiClient {
     json = new JSON();
     httpClient = buildHttpClient(debugging);
 
-    this.dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    this.dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.ROOT);
 
     // Use UTC as the default time zone.
     this.dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -199,6 +202,7 @@ public class ApiClient {
     throw new RuntimeException("No API key authentication configured!");
   }
 
+  {{#hasOAuthMethods}}
   /**
    * Helper method to set access token for the first OAuth2 authentication.
    * @param accessToken the access token
@@ -213,6 +217,7 @@ public class ApiClient {
     throw new RuntimeException("No OAuth2 authentication configured!");
   }
 
+  {{/hasOAuthMethods}}
   /**
    * Set the User-Agent header's value (by adding to the default header map).
    * @param userAgent the User-Agent header value
@@ -477,7 +482,7 @@ public class ApiClient {
   public Entity<?> serialize(Object obj, Map<String, Object> formParams, String contentType) throws ApiException {
     Entity<?> entity = null;
     if (contentType.startsWith("multipart/form-data")) {
-      MultipartFormDataOutput multipart = new MultipartFormDataOutput();  
+      MultipartFormDataOutput multipart = new MultipartFormDataOutput();
       //MultiPart multiPart = new MultiPart();
       for (Entry<String, Object> param: formParams.entrySet()) {
         if (param.getValue() instanceof File) {

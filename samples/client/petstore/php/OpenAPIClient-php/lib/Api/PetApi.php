@@ -65,18 +65,46 @@ class PetApi
     protected $headerSelector;
 
     /**
+     * @var int Host index
+     */
+    protected $hostIndex;
+
+    /**
      * @param ClientInterface $client
      * @param Configuration   $config
      * @param HeaderSelector  $selector
+     * @param int             $host_index (Optional) host index to select the list of hosts if defined in the OpenAPI spec
      */
     public function __construct(
         ClientInterface $client = null,
         Configuration $config = null,
-        HeaderSelector $selector = null
+        HeaderSelector $selector = null,
+        $host_index = 0
     ) {
         $this->client = $client ?: new Client();
         $this->config = $config ?: new Configuration();
         $this->headerSelector = $selector ?: new HeaderSelector();
+        $this->hostIndex = $host_index;
+    }
+
+    /**
+     * Set the host index
+     *
+     * @param  int Host index (required)
+     */
+    public function setHostIndex($host_index)
+    {
+        $this->hostIndex = $host_index;
+    }
+
+    /**
+     * Get the host index
+     *
+     * @return Host index
+     */
+    public function getHostIndex()
+    {
+        return $this->hostIndex;
     }
 
     /**
@@ -92,15 +120,15 @@ class PetApi
      *
      * Add a new pet to the store
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \OpenAPI\Client\ApiException on non-2xx response
      * @throws \InvalidArgumentException
      * @return void
      */
-    public function addPet($pet)
+    public function addPet($body)
     {
-        $this->addPetWithHttpInfo($pet);
+        $this->addPetWithHttpInfo($body);
     }
 
     /**
@@ -108,15 +136,15 @@ class PetApi
      *
      * Add a new pet to the store
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \OpenAPI\Client\ApiException on non-2xx response
      * @throws \InvalidArgumentException
      * @return array of null, HTTP status code, HTTP response headers (array of strings)
      */
-    public function addPetWithHttpInfo($pet)
+    public function addPetWithHttpInfo($body)
     {
-        $request = $this->addPetRequest($pet);
+        $request = $this->addPetRequest($body);
 
         try {
             $options = $this->createHttpClientOption();
@@ -160,14 +188,14 @@ class PetApi
      *
      * Add a new pet to the store
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function addPetAsync($pet)
+    public function addPetAsync($body)
     {
-        return $this->addPetAsyncWithHttpInfo($pet)
+        return $this->addPetAsyncWithHttpInfo($body)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -180,15 +208,15 @@ class PetApi
      *
      * Add a new pet to the store
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function addPetAsyncWithHttpInfo($pet)
+    public function addPetAsyncWithHttpInfo($body)
     {
         $returnType = '';
-        $request = $this->addPetRequest($pet);
+        $request = $this->addPetRequest($body);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -216,17 +244,17 @@ class PetApi
     /**
      * Create request for operation 'addPet'
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    protected function addPetRequest($pet)
+    protected function addPetRequest($body)
     {
-        // verify the required parameter 'pet' is set
-        if ($pet === null || (is_array($pet) && count($pet) === 0)) {
+        // verify the required parameter 'body' is set
+        if ($body === null || (is_array($body) && count($body) === 0)) {
             throw new \InvalidArgumentException(
-                'Missing the required parameter $pet when calling addPet'
+                'Missing the required parameter $body when calling addPet'
             );
         }
 
@@ -241,8 +269,8 @@ class PetApi
 
         // body params
         $_tempBody = null;
-        if (isset($pet)) {
-            $_tempBody = $pet;
+        if (isset($body)) {
+            $_tempBody = $body;
         }
 
         if ($multipart) {
@@ -259,10 +287,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -496,10 +524,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -614,9 +642,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\Pet[]' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -632,9 +657,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -702,9 +724,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -780,10 +799,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -898,9 +917,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\Pet[]' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -916,9 +932,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -986,9 +999,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -1064,10 +1074,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -1182,9 +1192,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\Pet' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -1200,9 +1207,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -1270,9 +1274,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -1349,10 +1350,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -1406,15 +1407,15 @@ class PetApi
      *
      * Update an existing pet
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \OpenAPI\Client\ApiException on non-2xx response
      * @throws \InvalidArgumentException
      * @return void
      */
-    public function updatePet($pet)
+    public function updatePet($body)
     {
-        $this->updatePetWithHttpInfo($pet);
+        $this->updatePetWithHttpInfo($body);
     }
 
     /**
@@ -1422,15 +1423,15 @@ class PetApi
      *
      * Update an existing pet
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \OpenAPI\Client\ApiException on non-2xx response
      * @throws \InvalidArgumentException
      * @return array of null, HTTP status code, HTTP response headers (array of strings)
      */
-    public function updatePetWithHttpInfo($pet)
+    public function updatePetWithHttpInfo($body)
     {
-        $request = $this->updatePetRequest($pet);
+        $request = $this->updatePetRequest($body);
 
         try {
             $options = $this->createHttpClientOption();
@@ -1474,14 +1475,14 @@ class PetApi
      *
      * Update an existing pet
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function updatePetAsync($pet)
+    public function updatePetAsync($body)
     {
-        return $this->updatePetAsyncWithHttpInfo($pet)
+        return $this->updatePetAsyncWithHttpInfo($body)
             ->then(
                 function ($response) {
                     return $response[0];
@@ -1494,15 +1495,15 @@ class PetApi
      *
      * Update an existing pet
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Promise\PromiseInterface
      */
-    public function updatePetAsyncWithHttpInfo($pet)
+    public function updatePetAsyncWithHttpInfo($body)
     {
         $returnType = '';
-        $request = $this->updatePetRequest($pet);
+        $request = $this->updatePetRequest($body);
 
         return $this->client
             ->sendAsync($request, $this->createHttpClientOption())
@@ -1530,17 +1531,17 @@ class PetApi
     /**
      * Create request for operation 'updatePet'
      *
-     * @param  \OpenAPI\Client\Model\Pet $pet Pet object that needs to be added to the store (required)
+     * @param  \OpenAPI\Client\Model\Pet $body Pet object that needs to be added to the store (required)
      *
      * @throws \InvalidArgumentException
      * @return \GuzzleHttp\Psr7\Request
      */
-    protected function updatePetRequest($pet)
+    protected function updatePetRequest($body)
     {
-        // verify the required parameter 'pet' is set
-        if ($pet === null || (is_array($pet) && count($pet) === 0)) {
+        // verify the required parameter 'body' is set
+        if ($body === null || (is_array($body) && count($body) === 0)) {
             throw new \InvalidArgumentException(
-                'Missing the required parameter $pet when calling updatePet'
+                'Missing the required parameter $body when calling updatePet'
             );
         }
 
@@ -1555,8 +1556,8 @@ class PetApi
 
         // body params
         $_tempBody = null;
-        if (isset($pet)) {
-            $_tempBody = $pet;
+        if (isset($body)) {
+            $_tempBody = $body;
         }
 
         if ($multipart) {
@@ -1573,10 +1574,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -1819,10 +1820,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -1941,9 +1942,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\ApiResponse' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -1959,9 +1957,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -2033,9 +2028,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -2123,10 +2115,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {
@@ -2245,9 +2237,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ('\OpenAPI\Client\Model\ApiResponse' !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -2263,9 +2252,6 @@ class PetApi
                 $content = $responseBody; //stream goes to serializer
             } else {
                 $content = $responseBody->getContents();
-                if ($returnType !== 'string') {
-                    $content = json_decode($content);
-                }
             }
 
             return [
@@ -2337,9 +2323,6 @@ class PetApi
                         $content = $responseBody; //stream goes to serializer
                     } else {
                         $content = $responseBody->getContents();
-                        if ($returnType !== 'string') {
-                            $content = json_decode($content);
-                        }
                     }
 
                     return [
@@ -2433,10 +2416,10 @@ class PetApi
         // for model (json/xml)
         if (isset($_tempBody)) {
             // $_tempBody is the method argument, if present
-            $httpBody = $_tempBody;
-            // \stdClass has no __toString(), so we should encode it manually
-            if ($httpBody instanceof \stdClass && $headers['Content-Type'] === 'application/json') {
-                $httpBody = \GuzzleHttp\json_encode($httpBody);
+            if ($headers['Content-Type'] === 'application/json') {
+                $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($_tempBody));
+            } else {
+                $httpBody = $_tempBody;
             }
         } elseif (count($formParams) > 0) {
             if ($multipart) {

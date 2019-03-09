@@ -17,30 +17,20 @@
 
 package org.openapitools.codegen.languages;
 
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-
 import com.google.common.collect.ImmutableMap;
 import com.samskivert.mustache.Mustache;
-
 import io.swagger.v3.oas.models.media.Schema;
-
-import org.openapitools.codegen.CliOption;
-import org.openapitools.codegen.CodegenConstants;
-import org.openapitools.codegen.CodegenModel;
-import org.openapitools.codegen.CodegenOperation;
-import org.openapitools.codegen.CodegenParameter;
-import org.openapitools.codegen.CodegenProperty;
-import org.openapitools.codegen.CodegenType;
-import org.openapitools.codegen.SupportingFile;
+import org.openapitools.codegen.*;
+import org.openapitools.codegen.utils.ModelUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public class CSharpClientCodegen extends AbstractCSharpCodegen {
     @SuppressWarnings({"hiding"})
@@ -57,7 +47,7 @@ public class CSharpClientCodegen extends AbstractCSharpCodegen {
     // Defines the sdk option for targeted frameworks, which differs from targetFramework and targetFrameworkNuget
     private static final String MCS_NET_VERSION_KEY = "x-mcs-sdk";
 
-    protected String packageGuid = "{" + java.util.UUID.randomUUID().toString().toUpperCase() + "}";
+    protected String packageGuid = "{" + java.util.UUID.randomUUID().toString().toUpperCase(Locale.ROOT) + "}";
     protected String clientPackage = "Org.OpenAPITools.Client";
     protected String localVariablePrefix = "";
     protected String apiDocPath = "docs/";
@@ -79,6 +69,9 @@ public class CSharpClientCodegen extends AbstractCSharpCodegen {
 
     // By default, generated code is considered public
     protected boolean nonPublicApi = Boolean.FALSE;
+
+    // use KellermanSoftware.CompareNetObjects for deep recursive object comparision
+    protected boolean useCompareNetObjects = Boolean.FALSE;
 
     public CSharpClientCodegen() {
         super();
@@ -192,6 +185,10 @@ public class CSharpClientCodegen extends AbstractCSharpCodegen {
         addSwitch(CodegenConstants.VALIDATABLE,
                 CodegenConstants.VALIDATABLE_DESC,
                 this.validatable);
+
+        addSwitch(CodegenConstants.USE_COMPARE_NET_OBJECTS,
+                CodegenConstants.USE_COMPARE_NET_OBJECTS_DESC,
+                this.useCompareNetObjects);
 
         regexModifiers = new HashMap<Character, String>();
         regexModifiers.put('i', "IgnoreCase");
@@ -527,12 +524,13 @@ public class CSharpClientCodegen extends AbstractCSharpCodegen {
     }
 
     @Override
-    public CodegenModel fromModel(String name, Schema model, Map<String, Schema> allDefinitions) {
-        CodegenModel codegenModel = super.fromModel(name, model, allDefinitions);
+    public CodegenModel fromModel(String name, Schema model) {
+        Map<String, Schema> allDefinitions = ModelUtils.getSchemas(this.openAPI);
+        CodegenModel codegenModel = super.fromModel(name, model);
         if (allDefinitions != null && codegenModel != null && codegenModel.parent != null) {
             final Schema parentModel = allDefinitions.get(toModelName(codegenModel.parent));
             if (parentModel != null) {
-                final CodegenModel parentCodegenModel = super.fromModel(codegenModel.parent, parentModel, allDefinitions);
+                final CodegenModel parentCodegenModel = super.fromModel(codegenModel.parent, parentModel);
                 if (codegenModel.hasEnums) {
                     codegenModel = this.reconcileInlineEnums(codegenModel, parentCodegenModel);
                 }
@@ -766,7 +764,6 @@ public class CSharpClientCodegen extends AbstractCSharpCodegen {
         }
     }
 
-
     public void setPackageName(String packageName) {
         this.packageName = packageName;
     }
@@ -793,6 +790,10 @@ public class CSharpClientCodegen extends AbstractCSharpCodegen {
 
     public void setGeneratePropertyChanged(final Boolean generatePropertyChanged) {
         this.generatePropertyChanged = generatePropertyChanged;
+    }
+
+    public void setUseCompareNetObjects(final Boolean useCompareNetObjects) {
+        this.useCompareNetObjects = useCompareNetObjects;
     }
 
     public boolean isNonPublicApi() {

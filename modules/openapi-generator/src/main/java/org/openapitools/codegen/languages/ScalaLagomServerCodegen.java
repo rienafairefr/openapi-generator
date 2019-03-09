@@ -17,12 +17,15 @@
 
 package org.openapitools.codegen.languages;
 
-import org.openapitools.codegen.*;
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.*;
+import org.openapitools.codegen.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+
+import static org.openapitools.codegen.utils.StringUtils.camelize;
+import static org.openapitools.codegen.utils.StringUtils.underscore;
 
 public class ScalaLagomServerCodegen extends AbstractScalaCodegen implements CodegenConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScalaLagomServerCodegen.class);
@@ -75,7 +78,7 @@ public class ScalaLagomServerCodegen extends AbstractScalaCodegen implements Cod
         importMapping.put("DateTime", "org.joda.time.DateTime");
         importMapping.put("ListBuffer", "scala.collection.mutable.ListBuffer");
 
-        typeMapping = new HashMap<String, String>();
+        typeMapping = new HashMap<>();
         typeMapping.put("Integer", "Int");
         typeMapping.put("enum", "NSString");
         typeMapping.put("array", "Seq");
@@ -88,7 +91,6 @@ public class ScalaLagomServerCodegen extends AbstractScalaCodegen implements Cod
         typeMapping.put("byte", "Byte");
         typeMapping.put("short", "Short");
         typeMapping.put("char", "Char");
-        typeMapping.put("long", "Long");
         typeMapping.put("double", "Double");
         typeMapping.put("object", "Any");
         typeMapping.put("file", "File");

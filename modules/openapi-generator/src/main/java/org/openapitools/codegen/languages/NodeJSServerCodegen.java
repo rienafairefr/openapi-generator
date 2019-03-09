@@ -20,14 +20,15 @@ package org.openapitools.codegen.languages;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
-
-import org.openapitools.codegen.*;
-import org.openapitools.codegen.utils.*;
-import io.swagger.v3.oas.models.*;
-import io.swagger.v3.oas.models.info.*;
-import io.swagger.v3.oas.models.PathItem.*;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.PathItem.HttpMethod;
 import io.swagger.v3.oas.models.Paths;
-
+import io.swagger.v3.oas.models.info.Info;
+import org.openapitools.codegen.*;
+import org.openapitools.codegen.config.GeneratorProperties;
+import org.openapitools.codegen.utils.URLPathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +37,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
 
 public class NodeJSServerCodegen extends DefaultCodegen implements CodegenConfig {
 
@@ -232,7 +231,7 @@ public class NodeJSServerCodegen extends DefaultCodegen implements CodegenConfig
         @SuppressWarnings("unchecked")
         List<CodegenOperation> operations = (List<CodegenOperation>) objectMap.get("operation");
         for (CodegenOperation operation : operations) {
-            operation.httpMethod = operation.httpMethod.toLowerCase();
+            operation.httpMethod = operation.httpMethod.toLowerCase(Locale.ROOT);
 
             List<CodegenParameter> params = operation.allParams;
             if (params != null && params.size() == 0) {
@@ -339,7 +338,7 @@ public class NodeJSServerCodegen extends DefaultCodegen implements CodegenConfig
         }
         writeOptional(outputFolder, new SupportingFile("package.mustache", "", "package.json"));
         writeOptional(outputFolder, new SupportingFile("README.mustache", "", "README.md"));
-        if (System.getProperty("noservice") == null) {
+        if (GeneratorProperties.getProperty("noservice") == null) {
             apiTemplateFiles.put(
                     "service.mustache",   // the template to use
                     "Service.js");       // the extension for each file to write
@@ -368,7 +367,7 @@ public class NodeJSServerCodegen extends DefaultCodegen implements CodegenConfig
                         .replaceAll("^[-]*", "")
                         .replaceAll("[-]*$", "")
                         .replaceAll("[-]{2,}", "-")
-                        .toLowerCase();
+                        .toLowerCase(Locale.ROOT);
                 this.additionalProperties.put("projectName", projectName);
             }
         }

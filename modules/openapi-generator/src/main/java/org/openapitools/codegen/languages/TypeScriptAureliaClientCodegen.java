@@ -19,10 +19,7 @@ package org.openapitools.codegen.languages;
 
 import org.openapitools.codegen.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
+import java.util.*;
 
 public class TypeScriptAureliaClientCodegen extends AbstractTypeScriptClientCodegen {
 
@@ -107,7 +104,7 @@ public class TypeScriptAureliaClientCodegen extends AbstractTypeScriptClientCode
         List<CodegenOperation> operationList = (List<CodegenOperation>) operations.get("operation");
         for (CodegenOperation op : operationList) {
             // Aurelia uses "asGet", "asPost", ... methods; change the method format
-            op.httpMethod = initialCaps(op.httpMethod.toLowerCase());
+            op.httpMethod = initialCaps(op.httpMethod.toLowerCase(Locale.ROOT));
 
             // Collect models to be imported
             for (CodegenParameter param : op.allParams) {
