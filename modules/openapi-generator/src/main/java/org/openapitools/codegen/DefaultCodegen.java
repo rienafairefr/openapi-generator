@@ -1875,7 +1875,6 @@ public class DefaultCodegen implements CodegenConfig {
         return camelize(toVarName(name));
     }
 
-
     /**
      * Convert OAS Property object to Codegen Property object
      *
@@ -2216,7 +2215,6 @@ public class DefaultCodegen implements CodegenConfig {
 
         return currentProperty == null ? new HashMap<String, Object>() : currentProperty.allowableValues;
     }
-
 
     /**
      * Update datatypeWithEnum for array container
@@ -2889,7 +2887,6 @@ public class DefaultCodegen implements CodegenConfig {
                 codegenParameter.isContainer = true;
                 codegenParameter.isListContainer = true;
 
-
                 // recursively add import
                 while (codegenProperty != null) {
                     imports.add(codegenProperty.baseType);
@@ -3103,7 +3100,7 @@ public class DefaultCodegen implements CodegenConfig {
             codegenParameter.paramName = "UNKNOWN_PARAMETER_NAME";
         }
 
-        // set the parameter excample value
+        // set the parameter example value
         // should be overridden by lang codegen
         setParameterExampleValue(codegenParameter, parameter);
 
@@ -3317,8 +3314,8 @@ public class DefaultCodegen implements CodegenConfig {
                 Header header = ModelUtils.getReferencedHeader(this.openAPI, headerEntry.getValue());
 
                 Schema schema;
-                if(header.getSchema() == null) {
-                    LOGGER.warn("No schema defined for Header '" + headerEntry.getKey() +"', using a String schema");
+                if (header.getSchema() == null) {
+                    LOGGER.warn("No schema defined for Header '" + headerEntry.getKey() + "', using a String schema");
                     schema = new StringSchema();
                 } else {
                     schema = header.getSchema();
@@ -3381,7 +3378,6 @@ public class DefaultCodegen implements CodegenConfig {
         opList.add(co);
         co.baseName = tag;
     }
-
 
     private void addParentContainer(CodegenModel model, String name, Schema schema) {
         final CodegenProperty property = fromProperty(name, schema);
@@ -3778,7 +3774,6 @@ public class DefaultCodegen implements CodegenConfig {
         this.docExtension = userDocExtension;
     }
 
-
     /**
      * Set HTTP user agent.
      *
@@ -3984,7 +3979,6 @@ public class DefaultCodegen implements CodegenConfig {
         }
     }
 
-
     /**
      * Update codegen property's enum by adding "enumVars" (with name and value)
      *
@@ -4037,7 +4031,7 @@ public class DefaultCodegen implements CodegenConfig {
         }
         // if "x-enum-varnames" or "x-enum-descriptions" defined, update varnames
         Map<String, Object> extensions = var.mostInnerItems != null ? var.mostInnerItems.getVendorExtensions() : var.getVendorExtensions();
-        if(referencedSchema.isPresent()) {
+        if (referencedSchema.isPresent()) {
             extensions = referencedSchema.get().getExtensions();
         }
         updateEnumVarsWithExtensions(enumVars, extensions);
@@ -4047,7 +4041,7 @@ public class DefaultCodegen implements CodegenConfig {
         if (var.defaultValue != null) {
             String enumName = null;
             final String enumDefaultValue;
-            if("string".equalsIgnoreCase(dataType)) {
+            if ("string".equalsIgnoreCase(dataType)) {
                 enumDefaultValue = toEnumValue(var.defaultValue, dataType);
             } else {
                 enumDefaultValue = var.defaultValue;
