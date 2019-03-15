@@ -1,9 +1,10 @@
-# ModelReturn
+# InlineObject1
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Return_** | **int32** | property description  *_/ &#39; \&quot; &#x3D;end -- \\r\\n \\n \\r | [optional] [default to null]
+**additional_metadata** | **String** | Additional data to pass to server | [optional] 
+**file** | [***&std::path::Path**](&std::path::Path.md) | file to upload | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 
