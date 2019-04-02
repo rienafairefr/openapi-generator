@@ -18,6 +18,10 @@ import re  # noqa: F401
 import six
 
 from petstore_api.api_client import ApiClient
+from petstore_api.exceptions import (
+    ApiTypeError,
+    ApiValueError
+)
 
 
 class PetApi(object):
@@ -72,7 +76,7 @@ class PetApi(object):
         local_var_host = local_var_hosts[0]
         if kwargs.get('_host_index'):
             if int(kwags.get('_host_index')) < 0 or int(kawgs.get('_host_index')) >= len(local_var_hosts):
-                raise ValueError("Invalid host index. Must be 0 <= index < %s" % len(local_var_host))
+                raise ApiValueError("Invalid host index. Must be 0 <= index < %s" % len(local_var_host))
             local_var_host = local_var_hosts[int(kwargs.get('_host_index'))]
         local_var_params = locals()
 
@@ -84,7 +88,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params and key != "_host_index":
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method add_pet" % key
                 )
@@ -93,7 +97,7 @@ class PetApi(object):
         # verify the required parameter 'pet' is set
         if ('pet' not in local_var_params or
                 local_var_params['pet'] is None):
-            raise ValueError("Missing the required parameter `pet` when calling `add_pet`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `pet` when calling `add_pet`")  # noqa: E501
 
         collection_formats = {}
 
@@ -186,7 +190,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method delete_pet" % key
                 )
@@ -195,7 +199,7 @@ class PetApi(object):
         # verify the required parameter 'pet_id' is set
         if ('pet_id' not in local_var_params or
                 local_var_params['pet_id'] is None):
-            raise ValueError("Missing the required parameter `pet_id` when calling `delete_pet`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `pet_id` when calling `delete_pet`")  # noqa: E501
 
         collection_formats = {}
 
@@ -285,7 +289,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method find_pets_by_status" % key
                 )
@@ -294,7 +298,7 @@ class PetApi(object):
         # verify the required parameter 'status' is set
         if ('status' not in local_var_params or
                 local_var_params['status'] is None):
-            raise ValueError("Missing the required parameter `status` when calling `find_pets_by_status`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `status` when calling `find_pets_by_status`")  # noqa: E501
 
         collection_formats = {}
 
@@ -388,7 +392,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method find_pets_by_tags" % key
                 )
@@ -397,7 +401,7 @@ class PetApi(object):
         # verify the required parameter 'tags' is set
         if ('tags' not in local_var_params or
                 local_var_params['tags'] is None):
-            raise ValueError("Missing the required parameter `tags` when calling `find_pets_by_tags`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `tags` when calling `find_pets_by_tags`")  # noqa: E501
 
         collection_formats = {}
 
@@ -491,7 +495,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method get_pet_by_id" % key
                 )
@@ -500,7 +504,7 @@ class PetApi(object):
         # verify the required parameter 'pet_id' is set
         if ('pet_id' not in local_var_params or
                 local_var_params['pet_id'] is None):
-            raise ValueError("Missing the required parameter `pet_id` when calling `get_pet_by_id`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `pet_id` when calling `get_pet_by_id`")  # noqa: E501
 
         collection_formats = {}
 
@@ -586,7 +590,7 @@ class PetApi(object):
         local_var_host = local_var_hosts[0]
         if kwargs.get('_host_index'):
             if int(kwags.get('_host_index')) < 0 or int(kawgs.get('_host_index')) >= len(local_var_hosts):
-                raise ValueError("Invalid host index. Must be 0 <= index < %s" % len(local_var_host))
+                raise ApiValueError("Invalid host index. Must be 0 <= index < %s" % len(local_var_host))
             local_var_host = local_var_hosts[int(kwargs.get('_host_index'))]
         local_var_params = locals()
 
@@ -598,7 +602,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params and key != "_host_index":
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method update_pet" % key
                 )
@@ -607,7 +611,7 @@ class PetApi(object):
         # verify the required parameter 'pet' is set
         if ('pet' not in local_var_params or
                 local_var_params['pet'] is None):
-            raise ValueError("Missing the required parameter `pet` when calling `update_pet`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `pet` when calling `update_pet`")  # noqa: E501
 
         collection_formats = {}
 
@@ -704,7 +708,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method update_pet_with_form" % key
                 )
@@ -713,7 +717,7 @@ class PetApi(object):
         # verify the required parameter 'pet_id' is set
         if ('pet_id' not in local_var_params or
                 local_var_params['pet_id'] is None):
-            raise ValueError("Missing the required parameter `pet_id` when calling `update_pet_with_form`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `pet_id` when calling `update_pet_with_form`")  # noqa: E501
 
         collection_formats = {}
 
@@ -811,7 +815,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method upload_file" % key
                 )
@@ -820,7 +824,7 @@ class PetApi(object):
         # verify the required parameter 'pet_id' is set
         if ('pet_id' not in local_var_params or
                 local_var_params['pet_id'] is None):
-            raise ValueError("Missing the required parameter `pet_id` when calling `upload_file`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `pet_id` when calling `upload_file`")  # noqa: E501
 
         collection_formats = {}
 
@@ -922,7 +926,7 @@ class PetApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method upload_file_with_required_file" % key
                 )
@@ -931,11 +935,11 @@ class PetApi(object):
         # verify the required parameter 'pet_id' is set
         if ('pet_id' not in local_var_params or
                 local_var_params['pet_id'] is None):
-            raise ValueError("Missing the required parameter `pet_id` when calling `upload_file_with_required_file`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `pet_id` when calling `upload_file_with_required_file`")  # noqa: E501
         # verify the required parameter 'required_file' is set
         if ('required_file' not in local_var_params or
                 local_var_params['required_file'] is None):
-            raise ValueError("Missing the required parameter `required_file` when calling `upload_file_with_required_file`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `required_file` when calling `upload_file_with_required_file`")  # noqa: E501
 
         collection_formats = {}
 

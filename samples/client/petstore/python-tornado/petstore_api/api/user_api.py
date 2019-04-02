@@ -18,6 +18,10 @@ import re  # noqa: F401
 import six
 
 from petstore_api.api_client import ApiClient
+from petstore_api.exceptions import (
+    ApiTypeError,
+    ApiValueError
+)
 
 
 class UserApi(object):
@@ -80,7 +84,7 @@ class UserApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method create_user" % key
                 )
@@ -89,7 +93,7 @@ class UserApi(object):
         # verify the required parameter 'body' is set
         if ('body' not in local_var_params or
                 local_var_params['body'] is None):
-            raise ValueError("Missing the required parameter `body` when calling `create_user`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `body` when calling `create_user`")  # noqa: E501
 
         collection_formats = {}
 
@@ -175,7 +179,7 @@ class UserApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method create_users_with_array_input" % key
                 )
@@ -184,7 +188,7 @@ class UserApi(object):
         # verify the required parameter 'body' is set
         if ('body' not in local_var_params or
                 local_var_params['body'] is None):
-            raise ValueError("Missing the required parameter `body` when calling `create_users_with_array_input`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `body` when calling `create_users_with_array_input`")  # noqa: E501
 
         collection_formats = {}
 
@@ -270,7 +274,7 @@ class UserApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method create_users_with_list_input" % key
                 )
@@ -279,7 +283,7 @@ class UserApi(object):
         # verify the required parameter 'body' is set
         if ('body' not in local_var_params or
                 local_var_params['body'] is None):
-            raise ValueError("Missing the required parameter `body` when calling `create_users_with_list_input`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `body` when calling `create_users_with_list_input`")  # noqa: E501
 
         collection_formats = {}
 
@@ -367,7 +371,7 @@ class UserApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method delete_user" % key
                 )
@@ -376,7 +380,7 @@ class UserApi(object):
         # verify the required parameter 'username' is set
         if ('username' not in local_var_params or
                 local_var_params['username'] is None):
-            raise ValueError("Missing the required parameter `username` when calling `delete_user`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `username` when calling `delete_user`")  # noqa: E501
 
         collection_formats = {}
 
@@ -463,7 +467,7 @@ class UserApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method get_user_by_name" % key
                 )
@@ -472,7 +476,7 @@ class UserApi(object):
         # verify the required parameter 'username' is set
         if ('username' not in local_var_params or
                 local_var_params['username'] is None):
-            raise ValueError("Missing the required parameter `username` when calling `get_user_by_name`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `username` when calling `get_user_by_name`")  # noqa: E501
 
         collection_formats = {}
 
@@ -566,7 +570,7 @@ class UserApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method login_user" % key
                 )
@@ -575,11 +579,11 @@ class UserApi(object):
         # verify the required parameter 'username' is set
         if ('username' not in local_var_params or
                 local_var_params['username'] is None):
-            raise ValueError("Missing the required parameter `username` when calling `login_user`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `username` when calling `login_user`")  # noqa: E501
         # verify the required parameter 'password' is set
         if ('password' not in local_var_params or
                 local_var_params['password'] is None):
-            raise ValueError("Missing the required parameter `password` when calling `login_user`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `password` when calling `login_user`")  # noqa: E501
 
         collection_formats = {}
 
@@ -670,7 +674,7 @@ class UserApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method logout_user" % key
                 )
@@ -763,7 +767,7 @@ class UserApi(object):
 
         for key, val in six.iteritems(local_var_params['kwargs']):
             if key not in all_params:
-                raise TypeError(
+                raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
                     " to method update_user" % key
                 )
@@ -772,11 +776,11 @@ class UserApi(object):
         # verify the required parameter 'username' is set
         if ('username' not in local_var_params or
                 local_var_params['username'] is None):
-            raise ValueError("Missing the required parameter `username` when calling `update_user`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `username` when calling `update_user`")  # noqa: E501
         # verify the required parameter 'body' is set
         if ('body' not in local_var_params or
                 local_var_params['body'] is None):
-            raise ValueError("Missing the required parameter `body` when calling `update_user`")  # noqa: E501
+            raise ApiValueError("Missing the required parameter `body` when calling `update_user`")  # noqa: E501
 
         collection_formats = {}
 
