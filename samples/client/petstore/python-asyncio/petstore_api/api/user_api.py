@@ -117,6 +117,8 @@ class UserApi(object):
 
         form_params = []
         local_var_files = {}
+        post_content_types = {}
+        multipart_header_params = {}
 
         body_params = None
         if 'body' in local_var_params:
@@ -137,6 +139,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            post_content_types=post_content_types,
             response_types=response_types,
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -224,6 +227,8 @@ class UserApi(object):
 
         form_params = []
         local_var_files = {}
+        post_content_types = {}
+        multipart_header_params = {}
 
         body_params = None
         if 'body' in local_var_params:
@@ -244,6 +249,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            post_content_types=post_content_types,
             response_types=response_types,
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -331,6 +337,8 @@ class UserApi(object):
 
         form_params = []
         local_var_files = {}
+        post_content_types = {}
+        multipart_header_params = {}
 
         body_params = None
         if 'body' in local_var_params:
@@ -351,6 +359,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            post_content_types=post_content_types,
             response_types=response_types,
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -442,6 +451,8 @@ class UserApi(object):
 
         form_params = []
         local_var_files = {}
+        post_content_types = {}
+        multipart_header_params = {}
 
         body_params = None
         # Authentication setting
@@ -461,6 +472,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            post_content_types=post_content_types,
             response_types=response_types,
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -550,6 +562,8 @@ class UserApi(object):
 
         form_params = []
         local_var_files = {}
+        post_content_types = {}
+        multipart_header_params = {}
 
         body_params = None
         # HTTP header `Accept`
@@ -574,6 +588,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            post_content_types=post_content_types,
             response_types=response_types,
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -671,6 +686,8 @@ class UserApi(object):
 
         form_params = []
         local_var_files = {}
+        post_content_types = {}
+        multipart_header_params = {}
 
         body_params = None
         # HTTP header `Accept`
@@ -694,6 +711,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            post_content_types=post_content_types,
             response_types=response_types,
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -775,6 +793,8 @@ class UserApi(object):
 
         form_params = []
         local_var_files = {}
+        post_content_types = {}
+        multipart_header_params = {}
 
         body_params = None
         # Authentication setting
@@ -793,6 +813,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            post_content_types=post_content_types,
             response_types=response_types,
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
@@ -890,6 +911,8 @@ class UserApi(object):
 
         form_params = []
         local_var_files = {}
+        post_content_types = {}
+        multipart_header_params = {}
 
         body_params = None
         if 'body' in local_var_params:
@@ -911,6 +934,7 @@ class UserApi(object):
             body=body_params,
             post_params=form_params,
             files=local_var_files,
+            post_content_types=post_content_types,
             response_types=response_types,
             auth_settings=auth_settings,
             async_req=local_var_params.get('async_req'),
